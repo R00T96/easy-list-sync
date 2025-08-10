@@ -90,38 +90,41 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container py-6 flex items-center justify-between gap-4">
+        <div className="container px-4 py-4 flex items-center justify-between gap-3">
           <h1 className="text-2xl md:text-3xl font-bold">Offline Shopping List</h1>
           <div className="flex items-center gap-2">
             <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Online" : "Offline"}</Badge>
-            <Button variant="secondary" onClick={requestSync} aria-label="Enable cloud sync">
+            <Button variant="secondary" size="sm" onClick={requestSync} aria-label="Enable cloud sync">
               <Cloud className="mr-2 h-4 w-4" /> Sync
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container py-10">
+      <main className="container px-4 py-6 sm:py-10">
         <section aria-labelledby="list-heading" className="mx-auto max-w-2xl">
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle id="list-heading">Your List</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-2 mb-6">
+              <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-stretch">
                 <Input
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   placeholder="Add an item..."
                   aria-label="Item name"
                   onKeyDown={(e) => { if (e.key === 'Enter') addItem(); }}
+                  className="w-full"
+                  autoComplete="off"
+                  enterKeyHint="done"
                 />
-                <div className="flex items-center gap-1">
+                <div className="flex items-center justify-center gap-1">
                   <Button variant="outline" type="button" aria-label="Decrease quantity" onClick={() => setQty(q => Math.max(1, q - 1))}>-</Button>
                   <div className="w-10 text-center select-none" aria-live="polite">{qty}</div>
                   <Button variant="outline" type="button" aria-label="Increase quantity" onClick={() => setQty(q => q + 1)}>+</Button>
                 </div>
-                <Button onClick={addItem} aria-label="Add item">
+                <Button onClick={addItem} aria-label="Add item" className="w-full sm:w-auto">
                   <Plus className="mr-2 h-4 w-4" /> Add
                 </Button>
               </div>
@@ -147,9 +150,9 @@ const Index = () => {
                 ))}
               </ul>
 
-              <div className="mt-6 flex items-center justify-between">
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-muted-foreground">Completed: {completedCount}</p>
-                <Button variant="destructive" onClick={clearCompleted} disabled={completedCount === 0} aria-label="Clear completed">
+                <Button variant="destructive" onClick={clearCompleted} disabled={completedCount === 0} aria-label="Clear completed" className="w-full sm:w-auto">
                   <Trash2 className="mr-2 h-4 w-4" /> Clear completed
                 </Button>
               </div>
