@@ -119,11 +119,6 @@ const Index = () => {
                   autoComplete="off"
                   enterKeyHint="done"
                 />
-                <div className="flex items-center justify-center gap-1">
-                  <Button variant="outline" type="button" aria-label="Decrease quantity" onClick={() => setQty(q => Math.max(1, q - 1))}>-</Button>
-                  <div className="w-10 text-center select-none" aria-live="polite">{qty}</div>
-                  <Button variant="outline" type="button" aria-label="Increase quantity" onClick={() => setQty(q => q + 1)}>+</Button>
-                </div>
                 <Button onClick={addItem} aria-label="Add item" className="w-full sm:w-auto">
                   <Plus className="mr-2 h-4 w-4" /> Add
                 </Button>
