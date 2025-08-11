@@ -15,3 +15,17 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+// Create a client instance that includes custom headers (e.g. x-list-id for PIN scoping)
+export const createSupabaseWithHeaders = (headers: Record<string, string>) => {
+  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+    global: {
+      headers,
+    },
+  });
+};

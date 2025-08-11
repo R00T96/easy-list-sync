@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Cloud } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { loadItems, saveItems, type ShoppingItem, type SyncStatus } from "@/store/shoppingList";
-import { supabase } from "@/integrations/supabase/client";
+import { createSupabaseWithHeaders } from "@/integrations/supabase/client";
+import { PinGate } from "@/components/PinGate";
 
 const Index = () => {
   const [items, setItems] = useState<ShoppingItem[]>([]);
@@ -16,16 +17,20 @@ const Index = () => {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const PENDING: SyncStatus = "pending";
   const [isSyncing, setIsSyncing] = useState(false);
+  const [pin, setPin] = useState<string | null>(null);
 
   // SEO
   useEffect(() => {
-    document.title = "Offline Shopping List — Sync Ready";
+    const title = pin ? `Shopping List — PIN ${pin}` : "Offline Shopping List — Sync Ready";
+    document.title = title;
     const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "Super simple offline-first shopping list with optional cloud sync.");
-  }, []);
+    if (desc) desc.setAttribute("content", "Simple offline-first shopping list with PIN-based shared sync.");
+  }, [pin]);
 
   useEffect(() => {
     setItems(loadItems());
+    const storedPin = localStorage.getItem("shopping-pin");
+    if (storedPin) setPin(storedPin);
   }, []);
 
   useEffect(() => {
@@ -42,21 +47,38 @@ const Index = () => {
   // Auto-sync when coming back online if there are pending changes
   useEffect(() => {
     if (!isOnline) return;
-    if (!items.some(i => i.syncStatus === PENDING)) return;
+    if (!pin) return;
+    if (!items.some(i => i.syncStatus === PENDING && i.list_id === pin)) return;
     setTimeout(() => {
       syncNow();
     }, 0);
   }, [isOnline]);
 
-  const visibleItems = useMemo(() => items.filter(i => !i.deleted), [items]);
+  const visibleItems = useMemo(
+    () => (pin ? items.filter(i => !i.deleted && i.list_id === pin) : []),
+    [items, pin]
+  );
   const completedCount = useMemo(() => visibleItems.filter(i => i.done).length, [visibleItems]);
 
+  const handlePinSet = (p: string) => {
+    setPin(p);
+    localStorage.setItem("shopping-pin", p);
+  };
+  const clearPin = () => {
+    localStorage.removeItem("shopping-pin");
+    setPin(null);
+  };
+
   const addItem = () => {
+    if (!pin) {
+      toast({ title: "Enter PIN", description: "Please set a PIN to add items." });
+      return;
+    }
     const trimmed = text.trim();
     if (!trimmed) return;
     const next: ShoppingItem = {
       id: crypto.randomUUID(),
-      list_id: "default",
+      list_id: pin,
       text: trimmed,
       qty: Math.max(1, qty || 1),
       done: false,
@@ -84,8 +106,8 @@ const Index = () => {
   };
 
   const clearCompleted = () => {
-    if (completedCount === 0) return;
-    const updated = items.map(i => i.done && !i.deleted ? { ...i, deleted: true, updated_at: new Date().toISOString(), syncStatus: PENDING } : i);
+    if (completedCount === 0 || !pin) return;
+    const updated = items.map(i => (i.list_id === pin && i.done && !i.deleted) ? { ...i, deleted: true, updated_at: new Date().toISOString(), syncStatus: PENDING } : i);
     setItems(updated);
     saveItems(updated);
     toast({ title: "Cleared completed", description: "Completed items marked for deletion (pending sync)." });
@@ -96,29 +118,32 @@ const Index = () => {
       toast({ title: "Offline", description: "Connect to the internet to sync." });
       return;
     }
+    if (!pin) {
+      toast({ title: "Enter PIN", description: "Set a PIN to sync your list." });
+      return;
+    }
     if (isSyncing) return;
     setIsSyncing(true);
     try {
-      const listId = "default";
-      const localItems = items;
-      const pending = localItems.filter(i => i.syncStatus === PENDING);
+      const sb = createSupabaseWithHeaders({ "x-list-id": pin });
+      const localForPin = items.filter(i => i.list_id === pin);
+      const pending = localForPin.filter(i => i.syncStatus === PENDING);
 
       if (pending.length > 0) {
         const toPush = pending.map(({ syncStatus, ...rest }) => rest);
-        const { error: upsertError } = await supabase
+        const { error: upsertError } = await sb
           .from("shopping_items")
           .upsert(toPush, { onConflict: "id" });
         if (upsertError) throw upsertError;
       }
 
-      const { data: serverItems, error } = await supabase
+      const { data: serverItems, error } = await sb
         .from("shopping_items")
-        .select("*")
-        .eq("list_id", listId);
+        .select("*");
       if (error) throw error;
 
       const byId = new Map<string, ShoppingItem>();
-      for (const li of localItems) byId.set(li.id, li);
+      for (const li of localForPin) byId.set(li.id, li);
       for (const si of serverItems ?? []) {
         const serverItem: ShoppingItem = {
           id: si.id as string,
@@ -140,13 +165,15 @@ const Index = () => {
             byId.set(serverItem.id, serverItem);
           } else {
             const { syncStatus, ...payload } = local as any;
-            await supabase.from("shopping_items").upsert([payload], { onConflict: "id" });
+            await sb.from("shopping_items").upsert([payload], { onConflict: "id" });
             byId.set(serverItem.id, { ...local, syncStatus: "synced" });
           }
         }
       }
 
-      const merged = Array.from(byId.values()).map(i => ({ ...i, syncStatus: "synced" as SyncStatus }));
+      const mergedForPin = Array.from(byId.values()).map(i => ({ ...i, syncStatus: "synced" as SyncStatus }));
+      const others = items.filter(i => i.list_id !== pin);
+      const merged = [...mergedForPin, ...others];
       setItems(merged);
       saveItems(merged);
       toast({ title: "Synced", description: "Local changes merged with cloud (last-write wins)." });
@@ -166,6 +193,23 @@ const Index = () => {
     syncNow();
   };
 
+  // PIN gate UI
+  if (!pin) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b">
+          <div className="container px-4 py-4 flex items-center justify-between gap-3">
+            <h1 className="text-2xl md:text-3xl font-bold">Offline Shopping List</h1>
+            <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Online" : "Offline"}</Badge>
+          </div>
+        </header>
+        <main className="container px-4 py-6 sm:py-10">
+          <PinGate onPinSet={handlePinSet} />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
@@ -173,6 +217,8 @@ const Index = () => {
           <h1 className="text-2xl md:text-3xl font-bold">Offline Shopping List</h1>
           <div className="flex items-center gap-2">
             <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Online" : "Offline"}</Badge>
+            <span className="text-sm text-muted-foreground">PIN: {pin}</span>
+            <Button variant="ghost" size="sm" onClick={clearPin} aria-label="Change PIN">Change</Button>
             <Button variant="secondary" size="sm" onClick={requestSync} disabled={!isOnline || isSyncing} aria-label="Sync with cloud" aria-busy={isSyncing}>
               <Cloud className="mr-2 h-4 w-4" /> Sync
             </Button>
