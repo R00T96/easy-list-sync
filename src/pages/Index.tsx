@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Cloud } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { loadItems, saveItems, type ShoppingItem, type SyncStatus } from "@/store/shoppingList";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [items, setItems] = useState<ShoppingItem[]>([]);
@@ -14,6 +15,7 @@ const Index = () => {
   const [qty, setQty] = useState<number>(1);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const PENDING: SyncStatus = "pending";
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // SEO
   useEffect(() => {
@@ -36,6 +38,15 @@ const Index = () => {
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
+
+  // Auto-sync when coming back online if there are pending changes
+  useEffect(() => {
+    if (!isOnline) return;
+    if (!items.some(i => i.syncStatus === PENDING)) return;
+    setTimeout(() => {
+      syncNow();
+    }, 0);
+  }, [isOnline]);
 
   const visibleItems = useMemo(() => items.filter(i => !i.deleted), [items]);
   const completedCount = useMemo(() => visibleItems.filter(i => i.done).length, [visibleItems]);
@@ -80,11 +91,79 @@ const Index = () => {
     toast({ title: "Cleared completed", description: "Completed items marked for deletion (pending sync)." });
   };
 
+  const syncNow = async () => {
+    if (!isOnline) {
+      toast({ title: "Offline", description: "Connect to the internet to sync." });
+      return;
+    }
+    if (isSyncing) return;
+    setIsSyncing(true);
+    try {
+      const listId = "default";
+      const localItems = items;
+      const pending = localItems.filter(i => i.syncStatus === PENDING);
+
+      if (pending.length > 0) {
+        const toPush = pending.map(({ syncStatus, ...rest }) => rest);
+        const { error: upsertError } = await supabase
+          .from("shopping_items")
+          .upsert(toPush, { onConflict: "id" });
+        if (upsertError) throw upsertError;
+      }
+
+      const { data: serverItems, error } = await supabase
+        .from("shopping_items")
+        .select("*")
+        .eq("list_id", listId);
+      if (error) throw error;
+
+      const byId = new Map<string, ShoppingItem>();
+      for (const li of localItems) byId.set(li.id, li);
+      for (const si of serverItems ?? []) {
+        const serverItem: ShoppingItem = {
+          id: si.id as string,
+          list_id: si.list_id as string,
+          text: si.text as string,
+          qty: Number(si.qty),
+          done: Boolean(si.done),
+          updated_at: new Date(si.updated_at as string).toISOString(),
+          deleted: Boolean(si.deleted),
+          syncStatus: "synced",
+        };
+        const local = byId.get(serverItem.id);
+        if (!local) {
+          byId.set(serverItem.id, serverItem);
+        } else {
+          const serverTime = new Date(serverItem.updated_at).getTime();
+          const localTime = new Date(local.updated_at).getTime();
+          if (serverTime >= localTime) {
+            byId.set(serverItem.id, serverItem);
+          } else {
+            const { syncStatus, ...payload } = local as any;
+            await supabase.from("shopping_items").upsert([payload], { onConflict: "id" });
+            byId.set(serverItem.id, { ...local, syncStatus: "synced" });
+          }
+        }
+      }
+
+      const merged = Array.from(byId.values()).map(i => ({ ...i, syncStatus: "synced" as SyncStatus }));
+      setItems(merged);
+      saveItems(merged);
+      toast({ title: "Synced", description: "Local changes merged with cloud (last-write wins)." });
+    } catch (e: any) {
+      console.error(e);
+      toast({ title: "Sync failed", description: e?.message || "Please try again." });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const requestSync = () => {
-    toast({
-      title: "Enable cloud sync",
-      description: "Connect Supabase in Lovable (green button top-right) to sync across devices.",
-    });
+    if (!isOnline) {
+      toast({ title: "Offline", description: "Connect to the internet to sync." });
+      return;
+    }
+    syncNow();
   };
 
   return (
@@ -94,7 +173,7 @@ const Index = () => {
           <h1 className="text-2xl md:text-3xl font-bold">Offline Shopping List</h1>
           <div className="flex items-center gap-2">
             <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Online" : "Offline"}</Badge>
-            <Button variant="secondary" size="sm" onClick={requestSync} aria-label="Enable cloud sync">
+            <Button variant="secondary" size="sm" onClick={requestSync} disabled={!isOnline || isSyncing} aria-label="Sync with cloud" aria-busy={isSyncing}>
               <Cloud className="mr-2 h-4 w-4" /> Sync
             </Button>
           </div>

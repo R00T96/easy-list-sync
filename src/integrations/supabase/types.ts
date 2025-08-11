@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      shopping_items: {
+        Row: {
+          deleted: boolean
+          done: boolean
+          id: string
+          list_id: string
+          qty: number
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          deleted?: boolean
+          done?: boolean
+          id?: string
+          list_id: string
+          qty?: number
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          deleted?: boolean
+          done?: boolean
+          id?: string
+          list_id?: string
+          qty?: number
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
