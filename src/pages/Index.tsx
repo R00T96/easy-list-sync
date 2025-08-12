@@ -136,23 +136,43 @@ const Index = () => {
     }
     if (isSyncing) return;
     setIsSyncing(true);
+    
+    console.log(`🔄 Starting sync for PIN ${pin}...`);
+    
     try {
       const sb = createSupabaseWithHeaders({ "x-list-id": pin });
       const localForPin = items.filter(i => i.list_id === pin);
       const pending = localForPin.filter(i => i.syncStatus === PENDING);
 
+      console.log(`📱 Local items: ${localForPin.length}, Pending: ${pending.length}`);
+
+      // Push pending changes first
       if (pending.length > 0) {
+        console.log(`📤 Pushing ${pending.length} pending items:`, pending.map(p => p.text));
         const toPush = pending.map(({ syncStatus, ...rest }) => rest);
-        const { error: upsertError } = await sb
+        const { data: upsertData, error: upsertError } = await sb
           .from("shopping_items")
-          .upsert(toPush, { onConflict: "id" });
-        if (upsertError) throw upsertError;
+          .upsert(toPush, { onConflict: "id" })
+          .select();
+        
+        if (upsertError) {
+          console.error("❌ Upsert error:", upsertError);
+          throw upsertError;
+        }
+        console.log(`✅ Successfully pushed items:`, upsertData);
       }
 
+      // Fetch all server items
       const { data: serverItems, error } = await sb
         .from("shopping_items")
         .select("*");
-      if (error) throw error;
+      
+      if (error) {
+        console.error("❌ Fetch error:", error);
+        throw error;
+      }
+
+      console.log(`📥 Server items: ${serverItems?.length || 0}`);
 
       const byId = new Map<string, ShoppingItem>();
       for (const li of localForPin) byId.set(li.id, li);
@@ -186,11 +206,14 @@ const Index = () => {
       const mergedForPin = Array.from(byId.values()).map(i => ({ ...i, syncStatus: "synced" as SyncStatus }));
       const others = items.filter(i => i.list_id !== pin);
       const merged = [...mergedForPin, ...others];
+      
+      console.log(`🔄 Final merged items for PIN ${pin}:`, mergedForPin.length);
+      
       setItems(merged);
       saveItems(merged);
-      toast({ title: "Synced", description: "Local changes merged with cloud (last-write wins)." });
+      toast({ title: "Synced", description: `${pending.length} changes pushed, ${mergedForPin.length} items synced.` });
     } catch (e: any) {
-      console.error(e);
+      console.error("❌ Sync failed:", e);
       toast({ title: "Sync failed", description: e?.message || "Please try again." });
     } finally {
       setIsSyncing(false);

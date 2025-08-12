@@ -17,8 +17,20 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 });
 
 // Create a client instance that includes custom headers (e.g. x-list-id for PIN scoping)
+// Use a singleton pattern to avoid multiple client instances
+let headerClient: ReturnType<typeof createClient<Database>> | null = null;
+let currentHeaders: string | null = null;
+
 export const createSupabaseWithHeaders = (headers: Record<string, string>) => {
-  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  const headersKey = JSON.stringify(headers);
+  
+  // Reuse existing client if headers haven't changed
+  if (headerClient && currentHeaders === headersKey) {
+    return headerClient;
+  }
+  
+  // Create new client only when headers change
+  headerClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       storage: localStorage,
       persistSession: true,
@@ -28,4 +40,7 @@ export const createSupabaseWithHeaders = (headers: Record<string, string>) => {
       headers,
     },
   });
+  
+  currentHeaders = headersKey;
+  return headerClient;
 };
