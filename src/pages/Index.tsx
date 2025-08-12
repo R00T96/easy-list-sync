@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Cloud } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { loadItems, saveItems, type ShoppingItem, type SyncStatus } from "@/store/shoppingList";
-import { createSupabaseWithHeaders } from "@/integrations/supabase/client";
+import { createSupabaseWithHeaders, supabase } from "@/integrations/supabase/client";
 import { PinGate } from "@/components/PinGate";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 const Index = () => {
   const [items, setItems] = useState<ShoppingItem[]>([]);
@@ -18,6 +19,8 @@ const Index = () => {
   const PENDING: SyncStatus = "pending";
   const [isSyncing, setIsSyncing] = useState(false);
   const [pin, setPin] = useState<string | null>(null);
+  const realtimeChannel = useRef<RealtimeChannel | null>(null);
+  const isHandlingRealtimeUpdate = useRef(false);
 
   // SEO
   useEffect(() => {
@@ -26,6 +29,52 @@ const Index = () => {
     const desc = document.querySelector('meta[name="description"]');
     if (desc) desc.setAttribute("content", "Simple offline-first shopping list with PIN-based shared sync.");
   }, [pin]);
+
+  // Setup realtime subscription
+  const setupRealtimeSubscription = useCallback(() => {
+    if (!pin || realtimeChannel.current) return;
+
+    console.log(`🔄 Setting up realtime subscription for PIN: ${pin}`);
+    
+    realtimeChannel.current = supabase
+      .channel(`shopping_items_${pin}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shopping_items',
+          filter: `list_id=eq.${pin}`
+        },
+        (payload) => {
+          if (isHandlingRealtimeUpdate.current) {
+            console.log('⏭️ Skipping realtime update (currently handling one)');
+            return;
+          }
+          
+          console.log('📡 Realtime update received:', payload);
+          isHandlingRealtimeUpdate.current = true;
+          
+          // Small delay to prevent race conditions
+          setTimeout(() => {
+            syncNow();
+            isHandlingRealtimeUpdate.current = false;
+          }, 100);
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Realtime subscription status:', status);
+      });
+  }, [pin]);
+
+  // Cleanup realtime subscription
+  const cleanupRealtimeSubscription = useCallback(() => {
+    if (realtimeChannel.current) {
+      console.log('🧹 Cleaning up realtime subscription');
+      supabase.removeChannel(realtimeChannel.current);
+      realtimeChannel.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     setItems(loadItems());
@@ -40,6 +89,18 @@ const Index = () => {
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (pin) {
+      setupRealtimeSubscription();
+    } else {
+      cleanupRealtimeSubscription();
+    }
+
+    return () => {
+      cleanupRealtimeSubscription();
+    };
+  }, [pin, setupRealtimeSubscription, cleanupRealtimeSubscription]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -69,6 +130,7 @@ const Index = () => {
   const completedCount = useMemo(() => visibleItems.filter(i => i.done).length, [visibleItems]);
 
   const handlePinSet = (p: string) => {
+    cleanupRealtimeSubscription(); // Cleanup old subscription first
     setPin(p);
     localStorage.setItem("shopping-pin", p);
     // Auto-sync when PIN is set to load existing data
@@ -77,6 +139,7 @@ const Index = () => {
     }, 100);
   };
   const clearPin = () => {
+    cleanupRealtimeSubscription();
     localStorage.removeItem("shopping-pin");
     setPin(null);
   };
@@ -103,18 +166,33 @@ const Index = () => {
     saveItems(updated);
     setText("");
     setQty(1);
+    
+    // Immediate sync for real-time experience
+    if (isOnline && !isSyncing) {
+      setTimeout(() => syncNow(), 50);
+    }
   };
 
   const toggleDone = (id: string) => {
     const updated = items.map(i => i.id === id ? { ...i, done: !i.done, updated_at: new Date().toISOString(), syncStatus: PENDING } : i);
     setItems(updated);
     saveItems(updated);
+    
+    // Immediate sync for real-time experience
+    if (isOnline && !isSyncing) {
+      setTimeout(() => syncNow(), 50);
+    }
   };
 
   const updateQty = (id: string, delta: number) => {
     const updated = items.map(i => i.id === id ? { ...i, qty: Math.max(1, i.qty + delta), updated_at: new Date().toISOString(), syncStatus: PENDING } : i);
     setItems(updated);
     saveItems(updated);
+    
+    // Immediate sync for real-time experience
+    if (isOnline && !isSyncing) {
+      setTimeout(() => syncNow(), 50);
+    }
   };
 
   const clearCompleted = () => {
@@ -123,6 +201,11 @@ const Index = () => {
     setItems(updated);
     saveItems(updated);
     toast({ title: "Cleared completed", description: "Completed items marked for deletion (pending sync)." });
+    
+    // Immediate sync for real-time experience
+    if (isOnline && !isSyncing) {
+      setTimeout(() => syncNow(), 50);
+    }
   };
 
   const syncNow = async () => {
