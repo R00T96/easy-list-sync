@@ -30,7 +30,15 @@ const Index = () => {
   useEffect(() => {
     setItems(loadItems());
     const storedPin = localStorage.getItem("shopping-pin");
-    if (storedPin) setPin(storedPin);
+    if (storedPin) {
+      setPin(storedPin);
+      // Auto-sync when component loads with existing PIN
+      if (navigator.onLine) {
+        setTimeout(() => {
+          syncNow();
+        }, 500);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -63,6 +71,10 @@ const Index = () => {
   const handlePinSet = (p: string) => {
     setPin(p);
     localStorage.setItem("shopping-pin", p);
+    // Auto-sync when PIN is set to load existing data
+    setTimeout(() => {
+      syncNow();
+    }, 100);
   };
   const clearPin = () => {
     localStorage.removeItem("shopping-pin");
