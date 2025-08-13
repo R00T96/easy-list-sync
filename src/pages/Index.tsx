@@ -47,25 +47,31 @@ const Index = () => {
           filter: `list_id=eq.${pin}`
         },
         (payload) => {
-          if (isHandlingRealtimeUpdate.current) {
-            console.log('⏭️ Skipping realtime update (currently handling one)');
+          if (isHandlingRealtimeUpdate.current || isSyncing) {
+            console.log('⏭️ Skipping realtime update (currently syncing or handling update)');
             return;
           }
           
           console.log('📡 Realtime update received:', payload);
           isHandlingRealtimeUpdate.current = true;
           
-          // Small delay to prevent race conditions
-          setTimeout(() => {
-            syncNow();
+          // Only sync if we don't have pending local changes
+          const hasPendingChanges = items.some(i => i.syncStatus === PENDING && i.list_id === pin);
+          if (!hasPendingChanges) {
+            setTimeout(() => {
+              syncNow();
+              isHandlingRealtimeUpdate.current = false;
+            }, 200);
+          } else {
+            console.log('🔄 Skipping realtime sync - have pending local changes');
             isHandlingRealtimeUpdate.current = false;
-          }, 100);
+          }
         }
       )
       .subscribe((status) => {
         console.log('📡 Realtime subscription status:', status);
       });
-  }, [pin]);
+  }, [pin, items, isSyncing]);
 
   // Cleanup realtime subscription
   const cleanupRealtimeSubscription = useCallback(() => {
@@ -169,7 +175,7 @@ const Index = () => {
     
     // Immediate sync for real-time experience
     if (isOnline && !isSyncing) {
-      setTimeout(() => syncNow(), 50);
+      setTimeout(() => syncNow(), 100);
     }
   };
 
@@ -180,7 +186,7 @@ const Index = () => {
     
     // Immediate sync for real-time experience
     if (isOnline && !isSyncing) {
-      setTimeout(() => syncNow(), 50);
+      setTimeout(() => syncNow(), 100);
     }
   };
 
@@ -191,7 +197,7 @@ const Index = () => {
     
     // Immediate sync for real-time experience
     if (isOnline && !isSyncing) {
-      setTimeout(() => syncNow(), 50);
+      setTimeout(() => syncNow(), 100);
     }
   };
 
@@ -204,7 +210,7 @@ const Index = () => {
     
     // Immediate sync for real-time experience
     if (isOnline && !isSyncing) {
-      setTimeout(() => syncNow(), 50);
+      setTimeout(() => syncNow(), 100);
     }
   };
 
