@@ -21,6 +21,14 @@ const Index = () => {
   const [pin, setPin] = useState<string | null>(null);
   const realtimeChannel = useRef<RealtimeChannel | null>(null);
   const isHandlingRealtimeUpdate = useRef(false);
+  
+  // Refs for stable access to current state in callbacks
+  const itemsRef = useRef<ShoppingItem[]>([]);
+  const isSyncingRef = useRef(false);
+  
+  // Keep refs in sync with state
+  useEffect(() => { itemsRef.current = items; }, [items]);
+  useEffect(() => { isSyncingRef.current = isSyncing; }, [isSyncing]);
 
   // SEO
   useEffect(() => {
@@ -30,7 +38,7 @@ const Index = () => {
     if (desc) desc.setAttribute("content", "Simple offline-first shopping list with PIN-based shared sync.");
   }, [pin]);
 
-  // Setup realtime subscription
+  // Setup realtime subscription with stable callbacks
   const setupRealtimeSubscription = useCallback(() => {
     if (!pin || realtimeChannel.current) return;
 
@@ -47,7 +55,7 @@ const Index = () => {
           filter: `list_id=eq.${pin}`
         },
         (payload) => {
-          if (isHandlingRealtimeUpdate.current || isSyncing) {
+          if (isHandlingRealtimeUpdate.current || isSyncingRef.current) {
             console.log('⏭️ Skipping realtime update (currently syncing or handling update)');
             return;
           }
@@ -55,11 +63,11 @@ const Index = () => {
           console.log('📡 Realtime update received:', payload);
           isHandlingRealtimeUpdate.current = true;
           
-          // Only sync if we don't have pending local changes
-          const hasPendingChanges = items.some(i => i.syncStatus === PENDING && i.list_id === pin);
+          // Only sync if we don't have pending local changes (using ref for current state)
+          const hasPendingChanges = itemsRef.current.some(i => i.syncStatus === PENDING && i.list_id === pin);
           if (!hasPendingChanges) {
-            setTimeout(() => {
-              syncNow();
+            setTimeout(async () => {
+              await syncNow();
               isHandlingRealtimeUpdate.current = false;
             }, 200);
           } else {
@@ -71,7 +79,7 @@ const Index = () => {
       .subscribe((status) => {
         console.log('📡 Realtime subscription status:', status);
       });
-  }, [pin, items, isSyncing]);
+  }, [pin]);
 
   // Cleanup realtime subscription
   const cleanupRealtimeSubscription = useCallback(() => {
@@ -121,13 +129,18 @@ const Index = () => {
 
   // Auto-sync when coming back online if there are pending changes
   useEffect(() => {
-    if (!isOnline) return;
-    if (!pin) return;
-    if (!items.some(i => i.syncStatus === PENDING && i.list_id === pin)) return;
-    setTimeout(() => {
-      syncNow();
-    }, 0);
-  }, [isOnline]);
+    if (!isOnline || !pin) return;
+    
+    const hasPendingItems = itemsRef.current.some(i => 
+      i.syncStatus === PENDING && i.list_id === pin
+    );
+    
+    if (hasPendingItems) {
+      setTimeout(() => {
+        syncNow();
+      }, 0);
+    }
+  }, [isOnline, pin]);
 
   const visibleItems = useMemo(
     () => (pin ? items.filter(i => !i.deleted && i.list_id === pin) : []),
@@ -207,7 +220,7 @@ const Index = () => {
     
     // Immediate sync for real-time experience
     if (isOnline && !isSyncing) {
-      setTimeout(() => syncNow(), 100);
+      syncNow();
     }
   };
 
@@ -261,10 +274,11 @@ const Index = () => {
         console.log(`✅ Successfully pushed items:`, upsertData);
       }
 
-      // Fetch all server items
+      // Fetch server items filtered by list_id
       const { data: serverItems, error } = await sb
         .from("shopping_items")
-        .select("*");
+        .select("*")
+        .eq("list_id", pin);
       
       if (error) {
         console.error("❌ Fetch error:", error);
