@@ -263,8 +263,17 @@ const Index = () => {
 
       console.log(`📥 Server items: ${serverItems?.length || 0}`);
 
+      // Start with local items (including just-pushed changes)
       const byId = new Map<string, ShoppingItem>();
-      for (const li of localForPin) byId.set(li.id, li);
+      
+      // First add all local items, marking previously pending ones as synced
+      for (const li of localForPin) {
+        const wasPending = pending.some(p => p.id === li.id);
+        byId.set(li.id, { ...li, syncStatus: wasPending ? "synced" : li.syncStatus });
+      }
+      
+      // Then merge server items, but only if they're not items we just pushed
+      const justPushedIds = new Set(pending.map(p => p.id));
       for (const si of serverItems ?? []) {
         const serverItem: ShoppingItem = {
           id: si.id as string,
@@ -276,19 +285,29 @@ const Index = () => {
           deleted: Boolean(si.deleted),
           syncStatus: "synced",
         };
+        
         const local = byId.get(serverItem.id);
+        
         if (!local) {
+          // New item from server
           byId.set(serverItem.id, serverItem);
-        } else {
+        } else if (!justPushedIds.has(serverItem.id)) {
+          // Only apply conflict resolution if this wasn't a just-pushed item
           const serverTime = new Date(serverItem.updated_at).getTime();
           const localTime = new Date(local.updated_at).getTime();
-          if (serverTime >= localTime) {
+          
+          if (serverTime > localTime) {
+            console.log(`🔄 Server wins for item: ${serverItem.text}`);
             byId.set(serverItem.id, serverItem);
-          } else {
+          } else if (local.syncStatus === PENDING) {
+            // Local change is newer, push it
+            console.log(`📤 Pushing newer local change: ${local.text}`);
             const { syncStatus, ...payload } = local as any;
             await sb.from("shopping_items").upsert([payload], { onConflict: "id" });
             byId.set(serverItem.id, { ...local, syncStatus: "synced" });
           }
+        } else {
+          console.log(`✅ Keeping just-pushed item: ${local.text}`);
         }
       }
 
