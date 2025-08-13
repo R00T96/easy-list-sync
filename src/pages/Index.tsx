@@ -191,9 +191,19 @@ const Index = () => {
   };
 
   const updateQty = (id: string, delta: number) => {
-    const updated = items.map(i => i.id === id ? { ...i, qty: Math.max(1, i.qty + delta), updated_at: new Date().toISOString(), syncStatus: PENDING } : i);
+    console.log(`🔢 Updating qty for item ${id}, delta: ${delta}`);
+    const updated = items.map(i => {
+      if (i.id === id) {
+        const newQty = Math.max(1, i.qty + delta);
+        console.log(`🔢 Item ${id}: qty ${i.qty} -> ${newQty}, marking as PENDING`);
+        return { ...i, qty: newQty, updated_at: new Date().toISOString(), syncStatus: PENDING };
+      }
+      return i;
+    });
     setItems(updated);
     saveItems(updated);
+    
+    console.log(`🔢 Updated items saved. Pending items: ${updated.filter(i => i.syncStatus === PENDING).length}`);
     
     // Immediate sync for real-time experience
     if (isOnline && !isSyncing) {
