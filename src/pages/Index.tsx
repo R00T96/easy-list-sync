@@ -38,6 +38,68 @@ const Index = () => {
     if (desc) desc.setAttribute("content", "Simple offline-first shopping list with PIN-based shared sync.");
   }, [pin]);
 
+  // Helper to merge a single server row into local state safely
+  const upsertFromServer = useCallback((row: any) => {
+    if (!row || row.list_id !== pin) return;
+
+    // Normalize to ShoppingItem
+    const serverItem: ShoppingItem = {
+      id: String(row.id),
+      list_id: String(row.list_id),
+      text: String(row.text),
+      qty: Number(row.qty),
+      done: Boolean(row.done),
+      updated_at: new Date(String(row.updated_at)).toISOString(),
+      deleted: Boolean(row.deleted),
+      syncStatus: "synced",
+    };
+
+    // Find local item
+    const local = itemsRef.current;
+    const idx = local.findIndex(i => i.id === serverItem.id);
+
+    // If we have a local pending edit that is newer, keep local and skip
+    if (idx >= 0) {
+      const li = local[idx];
+      const localIsPending = li.syncStatus === PENDING;
+      const serverTime = new Date(serverItem.updated_at).getTime();
+      const localTime = new Date(li.updated_at).getTime();
+
+      if (localIsPending && localTime >= serverTime) {
+        // We have a more recent or equal local change; do nothing
+        console.log('🔄 Keeping newer local change:', li.text);
+        return;
+      }
+    }
+
+    // Apply server change
+    let next: ShoppingItem[];
+    if (idx === -1) {
+      next = [serverItem, ...local];
+      console.log('➕ Applied server INSERT:', serverItem.text);
+    } else {
+      next = [...local];
+      next[idx] = { ...serverItem, syncStatus: "synced" };
+      console.log('🔄 Applied server UPDATE:', serverItem.text);
+    }
+
+    applyItems(next);
+  }, [pin]);
+
+  // Handle server deletes
+  const applyServerDelete = useCallback((row: any) => {
+    if (!row || row.list_id !== pin) return;
+    
+    const local = itemsRef.current;
+    const idx = local.findIndex(i => i.id === String(row.id));
+    if (idx === -1) return;
+
+    const next = [...local];
+    next[idx] = { ...next[idx], deleted: true, syncStatus: "synced", updated_at: new Date().toISOString() };
+    applyItems(next);
+    console.log('🗑️ Applied server DELETE:', row.text || row.id);
+  }, [pin]);
+
   // Setup realtime subscription with stable callbacks
   const setupRealtimeSubscription = useCallback(() => {
     if (!pin || realtimeChannel.current) return;
@@ -55,31 +117,34 @@ const Index = () => {
           filter: `list_id=eq.${pin}`
         },
         (payload) => {
-          if (isHandlingRealtimeUpdate.current || isSyncingRef.current) {
-            console.log('⏭️ Skipping realtime update (currently syncing or handling update)');
+          console.log('📡 Realtime update received:', payload.eventType, payload);
+          
+          // Fast-path: apply payloads directly to UI
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            upsertFromServer(payload.new);
             return;
           }
           
-          console.log('📡 Realtime update received:', payload);
-          isHandlingRealtimeUpdate.current = true;
-          
-          // Only sync if we don't have pending local changes (using ref for current state)
-          const hasPendingChanges = itemsRef.current.some(i => i.syncStatus === PENDING && i.list_id === pin);
-          if (!hasPendingChanges) {
+          if (payload.eventType === 'DELETE') {
+            applyServerDelete(payload.old);
+            return;
+          }
+
+          // Fallback: for unknown cases, guarded sync
+          if (!isSyncingRef.current && !isHandlingRealtimeUpdate.current) {
+            console.log('🔄 Fallback sync for unknown event type');
+            isHandlingRealtimeUpdate.current = true;
             setTimeout(async () => {
               await syncNow();
               isHandlingRealtimeUpdate.current = false;
             }, 200);
-          } else {
-            console.log('🔄 Skipping realtime sync - have pending local changes');
-            isHandlingRealtimeUpdate.current = false;
           }
         }
       )
       .subscribe((status) => {
         console.log('📡 Realtime subscription status:', status);
       });
-  }, [pin]);
+  }, [pin, upsertFromServer, applyServerDelete]);
 
   // Cleanup realtime subscription
   const cleanupRealtimeSubscription = useCallback(() => {
