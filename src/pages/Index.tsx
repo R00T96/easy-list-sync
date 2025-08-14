@@ -148,6 +148,13 @@ const Index = () => {
   );
   const completedCount = useMemo(() => visibleItems.filter(i => i.done).length, [visibleItems]);
 
+  // Centralized function to update items, refs, and persistence
+  const applyItems = (next: ShoppingItem[]) => {
+    itemsRef.current = next;  // Update ref first
+    setItems(next);           // Schedule state update
+    saveItems(next);          // Persist to storage
+  };
+
   const handlePinSet = (p: string) => {
     cleanupRealtimeSubscription(); // Cleanup old subscription first
     setPin(p);
@@ -180,64 +187,56 @@ const Index = () => {
       deleted: false,
       syncStatus: PENDING,
     };
-    const updated = [next, ...items];
-    setItems(updated);
-    saveItems(updated);
+    const updated = [next, ...itemsRef.current];
+    applyItems(updated);
     setText("");
     setQty(1);
     
     // Immediate sync for real-time experience
-    if (isOnline && !isSyncing) {
-      setTimeout(() => syncNow(), 100);
+    if (isOnline && !isSyncingRef.current) {
+      syncNow(updated);
     }
   };
 
   const toggleDone = (id: string) => {
-    const updated = items.map(i => i.id === id ? { ...i, done: !i.done, updated_at: new Date().toISOString(), syncStatus: PENDING } : i);
-    setItems(updated);
-    saveItems(updated);
+    const updated = itemsRef.current.map(i => i.id === id ? { ...i, done: !i.done, updated_at: new Date().toISOString(), syncStatus: PENDING } : i);
+    applyItems(updated);
     
     // Immediate sync for real-time experience
-    if (isOnline && !isSyncing) {
-      setTimeout(() => syncNow(), 100);
+    if (isOnline && !isSyncingRef.current) {
+      syncNow(updated);
     }
   };
 
   const updateQty = (id: string, delta: number) => {
-    console.log(`🔢 Updating qty for item ${id}, delta: ${delta}`);
-    const updated = items.map(i => {
+    const updated = itemsRef.current.map(i => {
       if (i.id === id) {
         const newQty = Math.max(1, i.qty + delta);
-        console.log(`🔢 Item ${id}: qty ${i.qty} -> ${newQty}, marking as PENDING`);
         return { ...i, qty: newQty, updated_at: new Date().toISOString(), syncStatus: PENDING };
       }
       return i;
     });
-    setItems(updated);
-    saveItems(updated);
-    
-    console.log(`🔢 Updated items saved. Pending items: ${updated.filter(i => i.syncStatus === PENDING).length}`);
+    applyItems(updated);
     
     // Immediate sync for real-time experience
-    if (isOnline && !isSyncing) {
-      syncNow();
+    if (isOnline && !isSyncingRef.current) {
+      syncNow(updated);
     }
   };
 
   const clearCompleted = () => {
     if (completedCount === 0 || !pin) return;
-    const updated = items.map(i => (i.list_id === pin && i.done && !i.deleted) ? { ...i, deleted: true, updated_at: new Date().toISOString(), syncStatus: PENDING } : i);
-    setItems(updated);
-    saveItems(updated);
+    const updated = itemsRef.current.map(i => (i.list_id === pin && i.done && !i.deleted) ? { ...i, deleted: true, updated_at: new Date().toISOString(), syncStatus: PENDING } : i);
+    applyItems(updated);
     toast({ title: "Cleared completed", description: "Completed items marked for deletion (pending sync)." });
     
     // Immediate sync for real-time experience
-    if (isOnline && !isSyncing) {
-      setTimeout(() => syncNow(), 100);
+    if (isOnline && !isSyncingRef.current) {
+      syncNow(updated);
     }
   };
 
-  const syncNow = async () => {
+  const syncNow = async (snapshot?: ShoppingItem[]) => {
     if (!isOnline) {
       toast({ title: "Offline", description: "Connect to the internet to sync." });
       return;
@@ -246,17 +245,21 @@ const Index = () => {
       toast({ title: "Enter PIN", description: "Set a PIN to sync your list." });
       return;
     }
-    if (isSyncing) return;
+    if (isSyncingRef.current) return;
+
+    isSyncingRef.current = true;  // Set ref guard first
     setIsSyncing(true);
     
     console.log(`🔄 Starting sync for PIN ${pin}...`);
     
     try {
       const sb = createSupabaseWithHeaders({ "x-list-id": pin });
-      const localForPin = items.filter(i => i.list_id === pin);
-      const pending = localForPin.filter(i => i.syncStatus === PENDING);
+      
+      // Use the freshest snapshot (passed in or from ref)
+      const local = (snapshot ?? itemsRef.current).filter(i => i.list_id === pin);
+      const pending = local.filter(i => i.syncStatus === PENDING);
 
-      console.log(`📱 Local items: ${localForPin.length}, Pending: ${pending.length}`);
+      console.log(`📱 Local items: ${local.length}, Pending: ${pending.length}`);
 
       // Push pending changes first
       if (pending.length > 0) {
@@ -291,7 +294,7 @@ const Index = () => {
       const byId = new Map<string, ShoppingItem>();
       
       // First add all local items, marking previously pending ones as synced
-      for (const li of localForPin) {
+      for (const li of local) {
         const wasPending = pending.some(p => p.id === li.id);
         byId.set(li.id, { ...li, syncStatus: wasPending ? "synced" : li.syncStatus });
       }
@@ -300,54 +303,58 @@ const Index = () => {
       const justPushedIds = new Set(pending.map(p => p.id));
       for (const si of serverItems ?? []) {
         const serverItem: ShoppingItem = {
-          id: si.id as string,
-          list_id: si.list_id as string,
-          text: si.text as string,
+          id: String(si.id),
+          list_id: String(si.list_id),
+          text: String(si.text),
           qty: Number(si.qty),
           done: Boolean(si.done),
-          updated_at: new Date(si.updated_at as string).toISOString(),
+          updated_at: new Date(String(si.updated_at)).toISOString(),
           deleted: Boolean(si.deleted),
           syncStatus: "synced",
         };
         
-        const local = byId.get(serverItem.id);
+        const localItem = byId.get(serverItem.id);
         
-        if (!local) {
+        if (!localItem) {
           // New item from server
           byId.set(serverItem.id, serverItem);
         } else if (!justPushedIds.has(serverItem.id)) {
           // Only apply conflict resolution if this wasn't a just-pushed item
           const serverTime = new Date(serverItem.updated_at).getTime();
-          const localTime = new Date(local.updated_at).getTime();
+          const localTime = new Date(localItem.updated_at).getTime();
           
           if (serverTime > localTime) {
             console.log(`🔄 Server wins for item: ${serverItem.text}`);
             byId.set(serverItem.id, serverItem);
-          } else if (local.syncStatus === PENDING) {
+          } else if (localItem.syncStatus === PENDING) {
             // Local change is newer, push it
-            console.log(`📤 Pushing newer local change: ${local.text}`);
-            const { syncStatus, ...payload } = local as any;
+            console.log(`📤 Pushing newer local change: ${localItem.text}`);
+            const { syncStatus, ...payload } = localItem as any;
             await sb.from("shopping_items").upsert([payload], { onConflict: "id" });
-            byId.set(serverItem.id, { ...local, syncStatus: "synced" });
+            byId.set(serverItem.id, { ...localItem, syncStatus: "synced" });
           }
         } else {
-          console.log(`✅ Keeping just-pushed item: ${local.text}`);
+          console.log(`✅ Keeping just-pushed item: ${localItem.text}`);
         }
       }
 
       const mergedForPin = Array.from(byId.values()).map(i => ({ ...i, syncStatus: "synced" as SyncStatus }));
-      const others = items.filter(i => i.list_id !== pin);
+      const others = (snapshot ?? itemsRef.current).filter(i => i.list_id !== pin);
       const merged = [...mergedForPin, ...others];
       
-      console.log(`🔄 Final merged items for PIN ${pin}:`, mergedForPin.length);
+      console.log(`🔄 Final merged items for PIN ${pin}: ${mergedForPin.length}`);
       
+      // Commit merge to both ref and state synchronously
+      itemsRef.current = merged;
       setItems(merged);
       saveItems(merged);
+      
       toast({ title: "Synced", description: `${pending.length} changes pushed, ${mergedForPin.length} items synced.` });
     } catch (e: any) {
       console.error("❌ Sync failed:", e);
       toast({ title: "Sync failed", description: e?.message || "Please try again." });
     } finally {
+      isSyncingRef.current = false;
       setIsSyncing(false);
     }
   };
