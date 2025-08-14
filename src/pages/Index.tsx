@@ -22,6 +22,12 @@ const Index = () => {
   const realtimeChannel = useRef<RealtimeChannel | null>(null);
   const isHandlingRealtimeUpdate = useRef(false);
   
+  // Client ID for preventing self-echo
+  const clientId = useRef(localStorage.getItem("client-id") || crypto.randomUUID());
+  useEffect(() => { 
+    localStorage.setItem("client-id", clientId.current); 
+  }, []);
+  
   // Refs for stable access to current state in callbacks
   const itemsRef = useRef<ShoppingItem[]>([]);
   const isSyncingRef = useRef(false);
@@ -41,6 +47,12 @@ const Index = () => {
   // Helper to merge a single server row into local state safely
   const upsertFromServer = useCallback((row: any) => {
     if (!row || row.list_id !== pin) return;
+    
+    // Ignore self-echo events
+    if (row.client_id === clientId.current) {
+      console.log('🔄 Ignoring self-echo event:', row.text);
+      return;
+    }
 
     // Normalize to ShoppingItem
     const serverItem: ShoppingItem = {
@@ -143,6 +155,10 @@ const Index = () => {
       )
       .subscribe((status) => {
         console.log('📡 Realtime subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          // Lightweight catch-up sync on reconnect
+          setTimeout(() => syncNow(), 500);
+        }
       });
   }, [pin, upsertFromServer, applyServerDelete]);
 
@@ -180,6 +196,9 @@ const Index = () => {
       cleanupRealtimeSubscription();
     };
   }, [pin, setupRealtimeSubscription, cleanupRealtimeSubscription]);
+
+  // Safety cleanup on unmount
+  useEffect(() => () => cleanupRealtimeSubscription(), [cleanupRealtimeSubscription]);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -251,6 +270,7 @@ const Index = () => {
       updated_at: new Date().toISOString(),
       deleted: false,
       syncStatus: PENDING,
+      client_id: clientId.current,
     };
     const updated = [next, ...itemsRef.current];
     applyItems(updated);
@@ -327,13 +347,13 @@ const Index = () => {
       console.log(`📱 Local items: ${local.length}, Pending: ${pending.length}`);
 
       // Push pending changes first
-      if (pending.length > 0) {
-        console.log(`📤 Pushing ${pending.length} pending items:`, pending.map(p => p.text));
-        const toPush = pending.map(({ syncStatus, ...rest }) => rest);
-        const { data: upsertData, error: upsertError } = await sb
-          .from("shopping_items")
-          .upsert(toPush, { onConflict: "id" })
-          .select();
+    if (pending.length > 0) {
+      console.log(`📤 Pushing ${pending.length} pending items:`, pending.map(p => p.text));
+      const toPush = pending.map(({ syncStatus, ...rest }) => ({ ...rest, client_id: clientId.current }));
+      const { data: upsertData, error: upsertError } = await sb
+        .from("shopping_items")
+        .upsert(toPush, { onConflict: "id" })
+        .select();
         
         if (upsertError) {
           console.error("❌ Upsert error:", upsertError);

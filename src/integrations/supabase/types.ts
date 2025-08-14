@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       shopping_items: {
         Row: {
+          client_id: string | null
           deleted: boolean
           done: boolean
           id: string
@@ -25,6 +26,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          client_id?: string | null
           deleted?: boolean
           done?: boolean
           id?: string
@@ -34,6 +36,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          client_id?: string | null
           deleted?: boolean
           done?: boolean
           id?: string

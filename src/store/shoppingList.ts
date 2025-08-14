@@ -9,6 +9,7 @@ export type ShoppingItem = {
   updated_at: string; // ISO string
   deleted: boolean;
   syncStatus: SyncStatus;
+  client_id?: string;
 };
 
 const STORAGE_KEY = "shopping-items-v1";
