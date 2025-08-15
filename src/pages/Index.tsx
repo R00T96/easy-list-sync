@@ -38,10 +38,10 @@ const Index = () => {
 
   // SEO
   useEffect(() => {
-    const title = pin ? `Shopping List — PIN ${pin}` : "Offline Shopping List — Sync Ready";
+    const title = pin ? `Group Checklist — Room ${pin}` : "Group Checklist — Plan it in minutes, live it for hours";
     document.title = title;
     const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute("content", "Simple offline-first shopping list with PIN-based shared sync.");
+    if (desc) desc.setAttribute("content", "Get 10+ brains on the same page in 10 seconds. No login, instant link share, works on any device.");
   }, [pin]);
 
   // Helper to merge a single server row into local state safely
@@ -256,7 +256,7 @@ const Index = () => {
 
   const addItem = () => {
     if (!pin) {
-      toast({ title: "Enter PIN", description: "Please set a PIN to add items." });
+      toast({ title: "Join Room", description: "Please join a room to add items." });
       return;
     }
     const trimmed = text.trim();
@@ -313,7 +313,7 @@ const Index = () => {
     if (completedCount === 0 || !pin) return;
     const updated = itemsRef.current.map(i => (i.list_id === pin && i.done && !i.deleted) ? { ...i, deleted: true, updated_at: new Date().toISOString(), syncStatus: PENDING } : i);
     applyItems(updated);
-    toast({ title: "Cleared completed", description: "Completed items marked for deletion (pending sync)." });
+    toast({ title: "Progress cleared!", description: "Completed items cleared — everyone will see the update." });
     
     // Immediate sync for real-time experience
     if (isOnline && !isSyncingRef.current) {
@@ -323,11 +323,11 @@ const Index = () => {
 
   const syncNow = async (snapshot?: ShoppingItem[]) => {
     if (!isOnline) {
-      toast({ title: "Offline", description: "Connect to the internet to sync." });
+      toast({ title: "Working offline", description: "Your changes are saved — they'll sync when you're back online." });
       return;
     }
     if (!pin) {
-      toast({ title: "Enter PIN", description: "Set a PIN to sync your list." });
+      toast({ title: "Join Room", description: "Join a room to sync progress." });
       return;
     }
     if (isSyncingRef.current) return;
@@ -434,7 +434,7 @@ const Index = () => {
       setItems(merged);
       saveItems(merged);
       
-      toast({ title: "Synced", description: `${pending.length} changes pushed, ${mergedForPin.length} items synced.` });
+      toast({ title: "✨ Everyone's in sync!", description: `${pending.length} updates shared, ${mergedForPin.length} items live.` });
     } catch (e: any) {
       console.error("❌ Sync failed:", e);
       toast({ title: "Sync failed", description: e?.message || "Please try again." });
@@ -446,7 +446,7 @@ const Index = () => {
 
   const requestSync = () => {
     if (!isOnline) {
-      toast({ title: "Offline", description: "Connect to the internet to sync." });
+      toast({ title: "Working offline", description: "Your changes are saved — they'll sync when you're back online." });
       return;
     }
     syncNow();
@@ -458,8 +458,8 @@ const Index = () => {
       <div className="min-h-screen bg-background">
         <header className="border-b">
           <div className="container px-4 py-4 flex items-center justify-between gap-3">
-            <h1 className="text-2xl md:text-3xl font-bold">Offline Shopping List</h1>
-            <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Online" : "Offline"}</Badge>
+            <h1 className="text-2xl md:text-3xl font-bold">Group Checklist</h1>
+            <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Live" : "Offline"}</Badge>
           </div>
         </header>
         <main className="container px-4 py-6 sm:py-10">
@@ -473,12 +473,12 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container px-4 py-4 flex items-center justify-between gap-3">
-          <h1 className="text-2xl md:text-3xl font-bold">Offline Shopping List</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Group Checklist</h1>
           <div className="flex items-center gap-2">
-            <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Online" : "Offline"}</Badge>
-            <span className="text-sm text-muted-foreground">PIN: {pin}</span>
-            <Button variant="ghost" size="sm" onClick={clearPin} aria-label="Change PIN">Change</Button>
-            <Button variant="secondary" size="sm" onClick={requestSync} disabled={!isOnline || isSyncing} aria-label="Sync with cloud" aria-busy={isSyncing}>
+            <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Live" : "Offline"}</Badge>
+            <span className="text-sm text-muted-foreground">Room: {pin}</span>
+            <Button variant="ghost" size="sm" onClick={clearPin} aria-label="Change Room">Switch</Button>
+            <Button variant="secondary" size="sm" onClick={requestSync} disabled={!isOnline || isSyncing} aria-label="Sync progress" aria-busy={isSyncing}>
               <Cloud className="mr-2 h-4 w-4" /> Sync
             </Button>
           </div>
@@ -489,7 +489,7 @@ const Index = () => {
         <section aria-labelledby="list-heading" className="mx-auto max-w-2xl">
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle id="list-heading">Your List</CardTitle>
+              <CardTitle id="list-heading">Group Progress</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-stretch">
