@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Cloud } from "lucide-react";
+import { Plus, Trash2, Cloud, History, RotateCcw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { loadItems, saveItems, type ShoppingItem, type SyncStatus } from "@/store/shoppingList";
 import { createSupabaseWithHeaders, supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ const Index = () => {
   const PENDING: SyncStatus = "pending";
   const [isSyncing, setIsSyncing] = useState(false);
   const [pin, setPin] = useState<string | null>(null);
+  const [showAllItems, setShowAllItems] = useState(false);
   const realtimeChannel = useRef<RealtimeChannel | null>(null);
   const isHandlingRealtimeUpdate = useRef(false);
   
@@ -227,10 +228,16 @@ const Index = () => {
   }, [isOnline, pin]);
 
   const visibleItems = useMemo(
-    () => (pin ? items.filter(i => !i.deleted && i.list_id === pin) : []),
-    [items, pin]
+    () => {
+      if (!pin) return [];
+      return showAllItems 
+        ? items.filter(i => i.list_id === pin)
+        : items.filter(i => !i.deleted && i.list_id === pin);
+    },
+    [items, pin, showAllItems]
   );
-  const completedCount = useMemo(() => visibleItems.filter(i => i.done).length, [visibleItems]);
+  const allRoomItems = useMemo(() => pin ? items.filter(i => i.list_id === pin) : [], [items, pin]);
+  const completedCount = useMemo(() => visibleItems.filter(i => i.done && !i.deleted).length, [visibleItems]);
 
   // Centralized function to update items, refs, and persistence
   const applyItems = (next: ShoppingItem[]) => {
@@ -314,6 +321,24 @@ const Index = () => {
     const updated = itemsRef.current.map(i => (i.list_id === pin && i.done && !i.deleted) ? { ...i, deleted: true, updated_at: new Date().toISOString(), syncStatus: PENDING } : i);
     applyItems(updated);
     toast({ title: "Progress cleared!", description: "Completed items cleared — everyone will see the update." });
+    
+    // Immediate sync for real-time experience
+    if (isOnline && !isSyncingRef.current) {
+      syncNow(updated);
+    }
+  };
+
+  const restoreItem = (id: string) => {
+    const updated = itemsRef.current.map(i => 
+      i.id === id ? { 
+        ...i, 
+        deleted: false, 
+        done: false, 
+        updated_at: new Date().toISOString(), 
+        syncStatus: PENDING 
+      } : i
+    );
+    applyItems(updated);
     
     // Immediate sync for real-time experience
     if (isOnline && !isSyncingRef.current) {
@@ -496,7 +521,7 @@ const Index = () => {
                 <Input
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  placeholder="Add an item..."
+                  placeholder="Add what's missing…"
                   aria-label="Item name"
                   onKeyDown={(e) => { if (e.key === 'Enter') addItem(); }}
                   className="w-full"
@@ -508,29 +533,63 @@ const Index = () => {
                 </Button>
               </div>
 
+              <div className="flex items-center justify-between mb-4">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowAllItems(!showAllItems)}
+                  className="text-sm"
+                >
+                  <History className="mr-2 h-4 w-4" />
+                  {showAllItems ? "Show Active Only" : "View All Items"}
+                </Button>
+                {showAllItems && (
+                  <p className="text-xs text-muted-foreground">
+                    Showing {allRoomItems.length} total items
+                  </p>
+                )}
+              </div>
+
               <ul className="space-y-3">
                 {visibleItems.length === 0 && (
                   <li className="text-muted-foreground text-sm">Your list is empty. Add your first item!</li>
                 )}
-                {visibleItems.map((item) => (
-                  <li key={item.id} className="flex items-center justify-between p-3 rounded-md border">
-                    <div className="flex items-center gap-3">
-                      <Checkbox checked={item.done} onCheckedChange={() => toggleDone(item.id)} aria-label={`Toggle ${item.text}`} />
-                      <div>
-                        <p className="font-medium leading-none">{item.text}</p>
-                        <p className="text-xs text-muted-foreground">Qty: {item.qty}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => updateQty(item.id, -1)} aria-label="Decrease quantity">-</Button>
-                      <Button variant="ghost" size="sm" onClick={() => updateQty(item.id, +1)} aria-label="Increase quantity">+</Button>
-                    </div>
-                  </li>
-                ))}
+                 {visibleItems.map((item) => (
+                   <li key={item.id} className={`flex items-center justify-between p-3 rounded-md border ${item.deleted ? 'opacity-60 bg-muted/30' : ''}`}>
+                     <div className="flex items-center gap-3">
+                       {!item.deleted && (
+                         <Checkbox checked={item.done} onCheckedChange={() => toggleDone(item.id)} aria-label={`Toggle ${item.text}`} />
+                       )}
+                       <div>
+                         <p className={`font-medium leading-none ${item.deleted ? 'line-through' : ''}`}>
+                           {item.text}
+                         </p>
+                         <p className="text-xs text-muted-foreground">
+                           Qty: {item.qty} {item.deleted && '• Removed'}
+                         </p>
+                       </div>
+                     </div>
+                     <div className="flex items-center gap-1">
+                       {item.deleted ? (
+                         <Button variant="outline" size="sm" onClick={() => restoreItem(item.id)} aria-label="Add back to list">
+                           <RotateCcw className="mr-1 h-3 w-3" />
+                           Add Back
+                         </Button>
+                       ) : (
+                         <>
+                           <Button variant="ghost" size="sm" onClick={() => updateQty(item.id, -1)} aria-label="Decrease quantity">-</Button>
+                           <Button variant="ghost" size="sm" onClick={() => updateQty(item.id, +1)} aria-label="Increase quantity">+</Button>
+                         </>
+                       )}
+                     </div>
+                   </li>
+                 ))}
               </ul>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-muted-foreground">Completed: {completedCount}</p>
+                <p className="text-sm text-muted-foreground">
+                  Done: {completedCount} — {completedCount > 0 ? "Keep going!" : "Keep going"}
+                </p>
                 <Button variant="destructive" onClick={clearCompleted} disabled={completedCount === 0} aria-label="Clear completed" className="w-full sm:w-auto">
                   <Trash2 className="mr-2 h-4 w-4" /> Clear completed
                 </Button>
