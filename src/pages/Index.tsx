@@ -483,7 +483,7 @@ const Index = () => {
       <div className="min-h-screen bg-background">
         <header className="border-b">
           <div className="container px-4 py-4 flex items-center justify-between gap-3">
-            <h1 className="text-2xl md:text-3xl font-bold">Group Checklist</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Our List</h1>
             <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Live" : "Offline"}</Badge>
           </div>
         </header>
