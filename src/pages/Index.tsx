@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -515,15 +515,17 @@ const Index = () => {
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle id="list-heading">
-                🔹 Type, hit add, done. Everyone sees it instantly.<br />
-                🔹 Tap ✓ when it's handled.
+                Just type. Hit add. Everyone sees it live.
               </CardTitle>
+              <CardDescription id="list-description">
+                Tap [✓] when it’s done — no repeats, no missed items.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {/* Inline guidance banner for new users */}
               <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-muted">
                 <p className="text-sm text-muted-foreground">
-                  💡 Need ideas? Use this for groceries, trips, chores, packing, to-dos, party prep, errands…
+                  💡 <b>Stuck?</b> Try groceries, chores, party prep, trip plans, to-dos, errands…
                 </p>
               </div>
               <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-stretch">
