@@ -5,6 +5,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { toast } from "@/hooks/use-toast";
 import { MessageCircleX, Brain, Luggage, Clock, Smartphone } from "lucide-react";
+import { sub } from "date-fns";
 
 type PinGateProps = {
   onPinSet: (pin: string) => void;
@@ -17,23 +18,28 @@ function randomPin(): string {
 const painPoints = [
   {
     icon: MessageCircleX,
-    text: "Endless group texts asking \"who's bringing what?\""
+    text: "Everyone asking, no one remembering.",
+    subtext: "Constantly reminding people of the plan"
   },
   {
     icon: Brain,
-    text: "People forgetting what was discussed"
+    text: "\"Didn’t we agree someone was bringing the drinks?\"",
+    subtext: "Forgetting who’s responsible for what"
   },
   {
     icon: Luggage,
-    text: "Duplicate packing or missing essentials"
+    text: "“Wait, didn’t you already pack the sunscreen?”",
+    subtext: "Overpacking or forgetting key items"
   },
   {
     icon: Clock,
-    text: "Chaos 30 minutes before a trip or event"
+    text: "\"We’re missing plates again?!\"",
+    subtext: "Last-minute scrambles to fill gaps"
   },
   {
     icon: Smartphone,
-    text: "Needing an app download or sign-up"
+    text: "“Sorry, I didn’t install it…”",
+    subtext: "Being forced to download an app"
   }
 ];
 
@@ -107,9 +113,9 @@ export const PinGate = ({ onPinSet }: PinGateProps) => {
               </Button>
             </div>
             <div className="text-center space-y-1 text-xs text-muted-foreground">
-              <p>✅ Built for trips, groceries, events, or crews</p>
-              <p>📱 Works on any device, no app needed</p>
-              <p>🔄 Real-time updates — see everyone's changes live</p>
+              <p>✅ Use it for trips, groceries, chores, or parties</p>
+              <p>📱 No app needed — works on any device</p>
+              <p>🔄 You see live changes</p>
             </div>
           </div>
         </CardContent>
