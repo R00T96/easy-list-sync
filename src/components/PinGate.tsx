@@ -32,15 +32,16 @@ export const PinGate = ({ onPinSet }: PinGateProps) => {
     <section aria-labelledby="pin-heading" className="mx-auto max-w-md">
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle id="pin-heading">Plan it together. Right now.</CardTitle>
+          <CardTitle id="pin-heading">No more 'who's got what?'</CardTitle>
           <p className="text-sm text-muted-foreground">
-            From chaos to checklist in seconds — no logins, no apps, just you and the crew.
+            From last-minute chaos to group calm — in under 30 seconds.<br />
+            No logins. No installs. Just one shared list, live and simple.
           </p>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center gap-6">
             <div className="text-center space-y-2">
-              <p className="text-sm font-medium">Enter room code or start fresh</p>
+              <p className="text-sm font-medium">Enter a room code or start a fresh list</p>
               <InputOTP maxLength={6} value={pin} onChange={setPin} aria-label="Room code">
                 <InputOTPGroup>
                   <InputOTPSlot index={0} />
@@ -54,16 +55,16 @@ export const PinGate = ({ onPinSet }: PinGateProps) => {
             </div>
             <div className="flex w-full gap-2">
               <Button className="w-1/2" onClick={handleContinue} disabled={pin.length !== 6}>
-                Join Room
+                Join with Code
               </Button>
               <Button variant="secondary" className="w-1/2" onClick={handleCreateNew}>
-                Start a List
+                Start a New List
               </Button>
             </div>
             <div className="text-center space-y-1 text-xs text-muted-foreground">
-              <p>🚀 Live updates as you type</p>
-              <p>📱 Works on any device</p>
-              <p>⏱ Make a plan in under 30 seconds</p>
+              <p>✅ Built for trips, groceries, events, or crews</p>
+              <p>📱 Works on any device, no app needed</p>
+              <p>🔄 Real-time updates — see everyone's changes live</p>
             </div>
           </div>
         </CardContent>
