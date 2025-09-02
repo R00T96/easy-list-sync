@@ -44,11 +44,16 @@ const painPoints = [
 ];
 
 const useCases = [
-  "Grocery lists with roommates",
-  "Packing for group trips", 
-  "Prepping for family dinners",
-  "Planning a surprise party",
-  "Event checklists with friends"
+  "Pack for road trips with friends",
+  "Sort out the family dinner plan (without texting 5 times)",
+  "Pull off a surprise party without dropping the ball",
+  "Get the groceries sorted — without roommate confusion",
+  "Stay on track for event day (no forgotten tasks)",
+  "Prep for weekend getaways without double-packing",
+  "Keep everyone aligned for a group dinner",
+  "Plan surprise parties like a stealth pro",
+  "Share the grocery run with zero overlap",
+  "Avoid chaos before birthdays, barbecues, or big days"
 ];
 
 export const PinGate = ({ onPinSet }: PinGateProps) => {
@@ -135,8 +140,11 @@ export const PinGate = ({ onPinSet }: PinGateProps) => {
                   <Card className="h-full">
                     <CardContent className="flex flex-col items-center p-4 text-center">
                       <Icon className="h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-xs text-muted-foreground leading-relaxed">
+                      <p className="text-s text-muted-foreground leading-relaxed">
                         {point.text}
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {point.subtext}
                       </p>
                     </CardContent>
                   </Card>
@@ -152,12 +160,12 @@ export const PinGate = ({ onPinSet }: PinGateProps) => {
       {/* Use Case Hints */}
       <div className="mt-8 text-center">
         <p className="text-xs text-muted-foreground mb-2">
-          👇 People are using this right now for:
+          📌 People are using this right now to:
         </p>
         <div className="space-y-1">
           {currentUseCases.map((useCase, index) => (
             <p key={index} className="text-xs text-muted-foreground animate-fade-in">
-              – {useCase}
+              {useCase}
             </p>
           ))}
         </div>
