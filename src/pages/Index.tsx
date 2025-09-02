@@ -498,7 +498,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container px-4 py-4 flex items-center justify-between gap-3">
-          <h1 className="text-2xl md:text-3xl font-bold">Your crew's live list</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Our shared list</h1>
           <div className="flex items-center gap-2">
             <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Live" : "Offline"}</Badge>
             <span className="text-sm text-muted-foreground">Room: {pin}</span>
@@ -514,14 +514,23 @@ const Index = () => {
         <section aria-labelledby="list-heading" className="mx-auto max-w-2xl">
           <Card className="shadow-sm">
             <CardHeader>
-              <CardTitle id="list-heading">Group Progress</CardTitle>
+              <CardTitle id="list-heading">
+                🔹 Type, hit add, done. Everyone sees it instantly.<br />
+                🔹 Tap ✓ when it's handled.
+              </CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Inline guidance banner for new users */}
+              <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-muted">
+                <p className="text-sm text-muted-foreground">
+                  💡 Need ideas? Use this for groceries, trips, chores, packing, to-dos, party prep, errands…
+                </p>
+              </div>
               <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-stretch">
                 <Input
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  placeholder="Add what's missing…"
+                  placeholder="Add something for the crew…"
                   aria-label="Item name"
                   onKeyDown={(e) => { if (e.key === 'Enter') addItem(); }}
                   className="w-full"
