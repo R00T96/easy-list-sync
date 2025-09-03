@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import { loadItems, saveItems, type ShoppingItem, type SyncStatus } from "@/store/shoppingList";
 import { createSupabaseWithHeaders, supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
 import { usePin } from "@/hooks/usePin";
 import { Header } from "@/components/Header";
 import { PinGateStage } from "@/components/PinGateStage";
@@ -458,6 +457,10 @@ const Index = () => {
     }
     syncNow();
   };
+
+  useEffect(() => {
+    console.log("PIN changed in Index:", pin);
+  }, [pin]);
 
   return (
     <div className="min-h-screen bg-background">
