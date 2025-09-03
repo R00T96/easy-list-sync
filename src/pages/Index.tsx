@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { toast } from "@/hooks/use-toast";
 import { loadItems, saveItems, type ShoppingItem, type SyncStatus } from "@/store/shoppingList";
 import { createSupabaseWithHeaders, supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 import { Header } from "@/components/Header";
 import { PinGateStage } from "@/components/PinGateStage";
 import { ListStage } from "@/components/ListStage";
