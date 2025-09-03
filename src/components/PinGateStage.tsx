@@ -3,25 +3,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "@/hooks/use-toast";
-
-type PinGateStageProps = {
-  onPinSet: (pin: string) => void;
-};
+import { usePin } from "@/hooks/usePin";
 
 function randomPin(): string {
   return Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
 }
 
-export const PinGateStage = ({ onPinSet }: PinGateStageProps) => {
+export const PinGateStage = () => {
   const [pin, setPin] = useState("");
+  const { savePin } = usePin();
 
   const handleContinue = () => {
-    if (pin.length === 6) onPinSet(pin);
+    if (pin.length === 6) savePin(pin);
   };
 
   const handleCreateNew = () => {
     const newPin = randomPin();
-    onPinSet(newPin);
+    savePin(newPin);
     toast({
       title: "🎉 Room created! Feel the chaos snap into place",
       description: `Share room ${newPin} — everyone sees progress in real-time`,

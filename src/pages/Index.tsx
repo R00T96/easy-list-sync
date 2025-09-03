@@ -3,6 +3,7 @@ import { toast } from "@/hooks/use-toast";
 import { loadItems, saveItems, type ShoppingItem, type SyncStatus } from "@/store/shoppingList";
 import { createSupabaseWithHeaders, supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { usePin } from "@/hooks/usePin";
 import { Header } from "@/components/Header";
 import { PinGateStage } from "@/components/PinGateStage";
 import { ListStage } from "@/components/ListStage";
@@ -10,13 +11,13 @@ import { AppFooter } from "@/components/AppFooter";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 const Index = () => {
+  const { pin } = usePin();
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [text, setText] = useState("");
   const [qty, setQty] = useState<number>(1);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const PENDING: SyncStatus = "pending";
   const [isSyncing, setIsSyncing] = useState(false);
-  const [pin, setPin] = useState<string | null>(null);
   const [showAllItems, setShowAllItems] = useState(false);
   const realtimeChannel = useRef<RealtimeChannel | null>(null);
   const isHandlingRealtimeUpdate = useRef(false);
@@ -172,17 +173,13 @@ const Index = () => {
 
   useEffect(() => {
     setItems(loadItems());
-    const storedPin = localStorage.getItem("shopping-pin");
-    if (storedPin) {
-      setPin(storedPin);
-      // Auto-sync when component loads with existing PIN
-      if (navigator.onLine) {
-        setTimeout(() => {
-          syncNow();
-        }, 500);
-      }
+    // Auto-sync when component loads with existing PIN
+    if (pin && navigator.onLine) {
+      setTimeout(() => {
+        syncNow();
+      }, 500);
     }
-  }, []);
+  }, [pin]);
 
   useEffect(() => {
     if (pin) {
@@ -244,20 +241,7 @@ const Index = () => {
     saveItems(next);          // Persist to storage
   };
 
-  const handlePinSet = (p: string) => {
-    cleanupRealtimeSubscription(); // Cleanup old subscription first
-    setPin(p);
-    localStorage.setItem("shopping-pin", p);
-    // Auto-sync when PIN is set to load existing data
-    setTimeout(() => {
-      syncNow();
-    }, 100);
-  };
-  const clearPin = () => {
-    cleanupRealtimeSubscription();
-    localStorage.removeItem("shopping-pin");
-    setPin(null);
-  };
+  // Remove old PIN management functions since they're now in the hook
 
   const addItem = () => {
     if (!pin) {
@@ -479,9 +463,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <Header 
-          pin={pin} 
           isOnline={isOnline} 
-          clearPin={clearPin} 
           requestSync={requestSync} 
           isSyncing={isSyncing} 
         />
@@ -489,10 +471,9 @@ const Index = () => {
 
       <main className="container px-4 py-6 sm:py-10">
         {!pin ? (
-          <PinGateStage onPinSet={handlePinSet} />
+          <PinGateStage />
         ) : (
           <ListStage
-            pin={pin}
             isOnline={isOnline}
             showAllItems={showAllItems}
             setShowAllItems={setShowAllItems}

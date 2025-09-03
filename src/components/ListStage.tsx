@@ -3,10 +3,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, History } from "lucide-react";
 import { ListItemRow } from "./ListItemRow";
+import { usePin } from "@/hooks/usePin";
 import type { ShoppingItem } from "@/store/shoppingList";
 
 type ListStageProps = {
-  pin: string;
   isOnline: boolean;
   showAllItems: boolean;
   setShowAllItems: (show: boolean) => void;
@@ -23,7 +23,6 @@ type ListStageProps = {
 };
 
 export const ListStage = ({
-  pin,
   isOnline,
   showAllItems,
   setShowAllItems,
@@ -38,6 +37,7 @@ export const ListStage = ({
   restoreItem,
   completedCount
 }: ListStageProps) => {
+  const { pin } = usePin();
   return (
     <section aria-labelledby="list-heading" className="mx-auto max-w-2xl">
       <Card className="shadow-sm">

@@ -1,16 +1,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Cloud } from "lucide-react";
+import { usePin } from "@/hooks/usePin";
 
 type HeaderProps = {
-  pin: string | null;
   isOnline: boolean;
-  clearPin: () => void;
   requestSync: () => void;
   isSyncing: boolean;
 };
 
-export const Header = ({ pin, isOnline, clearPin, requestSync, isSyncing }: HeaderProps) => {
+export const Header = ({ isOnline, requestSync, isSyncing }: HeaderProps) => {
+  const { pin, clearPin } = usePin();
   return (
     <div className="container px-4 py-4 flex items-center justify-between gap-3">
       <h1 className="text-2xl md:text-3xl font-bold">Our List</h1>
