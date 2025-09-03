@@ -462,6 +462,14 @@ const Index = () => {
     console.log("PIN changed in Index:", pin);
   }, [pin]);
 
+  const actions = {
+    addItem,
+    updateQty,
+    toggleDone,
+    clearCompleted,
+    restoreItem,
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
@@ -484,12 +492,8 @@ const Index = () => {
             allItems={allRoomItems}
             text={text}
             setText={setText}
-            addItem={addItem}
-            updateQty={updateQty}
-            toggleDone={toggleDone}
-            clearCompleted={clearCompleted}
-            restoreItem={restoreItem}
             completedCount={completedCount}
+            actions={actions}
           />
         )}
         
