@@ -1,13 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { toast } from "@/hooks/use-toast";
-import { MessageCircleX, Brain, Luggage, Clock, Smartphone } from "lucide-react";
-import { sub } from "date-fns";
 
-type PinGateProps = {
+type PinGateStageProps = {
   onPinSet: (pin: string) => void;
 };
 
@@ -15,50 +12,8 @@ function randomPin(): string {
   return Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
 }
 
-const painPoints = [
-  {
-    icon: MessageCircleX,
-    text: "Everyone asking, no one remembering.",
-    subtext: "Constantly reminding people of the plan"
-  },
-  {
-    icon: Brain,
-    text: "\"Didn’t we agree someone was bringing the drinks?\"",
-    subtext: "Forgetting who’s responsible for what"
-  },
-  {
-    icon: Luggage,
-    text: "“Wait, didn’t you already pack the sunscreen?”",
-    subtext: "Overpacking or forgetting key items"
-  },
-  {
-    icon: Clock,
-    text: "\"We’re missing plates again?!\"",
-    subtext: "Last-minute scrambles to fill gaps"
-  },
-  {
-    icon: Smartphone,
-    text: "“Sorry, I didn’t install it…”",
-    subtext: "Being forced to download an app"
-  }
-];
-
-const useCases = [
-  "Pack for road trips with friends",
-  "Sort out the family dinner plan (without texting 5 times)",
-  "Pull off a surprise party without dropping the ball",
-  "Get the groceries sorted — without roommate confusion",
-  "Stay on track for event day (no forgotten tasks)",
-  "Prep for weekend getaways without double-packing",
-  "Keep everyone aligned for a group dinner",
-  "Plan surprise parties like a stealth pro",
-  "Share the grocery run with zero overlap",
-  "Avoid chaos before birthdays, barbecues, or big days"
-];
-
-export const PinGate = ({ onPinSet }: PinGateProps) => {
+export const PinGateStage = ({ onPinSet }: PinGateStageProps) => {
   const [pin, setPin] = useState("");
-  const [currentUseCases, setCurrentUseCases] = useState(useCases.slice(0, 3));
 
   const handleContinue = () => {
     if (pin.length === 6) onPinSet(pin);
@@ -72,17 +27,6 @@ export const PinGate = ({ onPinSet }: PinGateProps) => {
       description: `Share room ${newPin} — everyone sees progress in real-time`,
     });
   };
-
-  // Rotate use cases every 4 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentUseCases(prev => {
-        const startIndex = Math.floor(Math.random() * (useCases.length - 2));
-        return useCases.slice(startIndex, startIndex + 3);
-      });
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <section aria-labelledby="pin-heading" className="mx-auto max-w-md">
@@ -125,7 +69,6 @@ export const PinGate = ({ onPinSet }: PinGateProps) => {
           </div>
         </CardContent>
       </Card>
-
     </section>
   );
 };

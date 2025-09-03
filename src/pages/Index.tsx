@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Cloud, History, RotateCcw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { loadItems, saveItems, type ShoppingItem, type SyncStatus } from "@/store/shoppingList";
 import { createSupabaseWithHeaders, supabase } from "@/integrations/supabase/client";
-import { PinGate } from "@/components/PinGate";
+import { Header } from "@/components/Header";
+import { PinGateStage } from "@/components/PinGateStage";
+import { ListStage } from "@/components/ListStage";
+import { AppFooter } from "@/components/AppFooter";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 const Index = () => {
@@ -477,137 +474,41 @@ const Index = () => {
     syncNow();
   };
 
-  // PIN gate UI
-  if (!pin) {
-    return (
-      <div className="min-h-screen bg-background">
-        <header className="border-b">
-          <div className="container px-4 py-4 flex items-center justify-between gap-3">
-            <h1 className="text-2xl md:text-3xl font-bold">Our List</h1>
-            <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Live" : "Offline"}</Badge>
-          </div>
-        </header>
-        <main className="container px-4 py-6 sm:py-10">
-          <PinGate onPinSet={handlePinSet} />
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container px-4 py-4 flex items-center justify-between gap-3">
-          <h1 className="text-2xl md:text-3xl font-bold">Our shared list</h1>
-          <div className="flex items-center gap-2">
-            <Badge variant={isOnline ? "default" : "secondary"}>{isOnline ? "Live" : "Offline"}</Badge>
-            <span className="text-sm text-muted-foreground">Room: {pin}</span>
-            <Button variant="ghost" size="sm" onClick={clearPin} aria-label="Change Room">Switch</Button>
-            <Button variant="secondary" size="sm" onClick={requestSync} disabled={!isOnline || isSyncing} aria-label="Sync progress" aria-busy={isSyncing}>
-              <Cloud className="mr-2 h-4 w-4" /> Sync
-            </Button>
-          </div>
-        </div>
+        <Header 
+          pin={pin} 
+          isOnline={isOnline} 
+          clearPin={clearPin} 
+          requestSync={requestSync} 
+          isSyncing={isSyncing} 
+        />
       </header>
 
       <main className="container px-4 py-6 sm:py-10">
-        <section aria-labelledby="list-heading" className="mx-auto max-w-2xl">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle id="list-heading">
-                Just type. Hit add. Everyone sees it live.
-              </CardTitle>
-              <CardDescription id="list-description">
-                Tap [✓] when it’s done — no repeats, no missed items.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Inline guidance banner for new users */}
-              <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-muted">
-                <p className="text-sm text-muted-foreground">
-                  💡 <b>Stuck?</b> Try groceries, chores, party prep, trip plans, to-dos, errands…
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-stretch">
-                <Input
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Add something for the crew…"
-                  aria-label="Item name"
-                  onKeyDown={(e) => { if (e.key === 'Enter') addItem(); }}
-                  className="w-full"
-                  autoComplete="off"
-                  enterKeyHint="done"
-                />
-                <Button onClick={addItem} aria-label="Add item" className="w-full sm:w-auto">
-                  <Plus className="mr-2 h-4 w-4" /> Add
-                </Button>
-              </div>
-
-              <div className="flex items-center justify-between mb-4">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowAllItems(!showAllItems)}
-                  className="text-sm"
-                >
-                  <History className="mr-2 h-4 w-4" />
-                  {showAllItems ? "Show Active Only" : "View All Items"}
-                </Button>
-                {showAllItems && (
-                  <p className="text-xs text-muted-foreground">
-                    Showing {allRoomItems.length} total items
-                  </p>
-                )}
-              </div>
-
-              <ul className="space-y-3">
-                {visibleItems.length === 0 && (
-                  <li className="text-muted-foreground text-sm">Your list is empty. Add your first item!</li>
-                )}
-                 {visibleItems.map((item) => (
-                   <li key={item.id} className={`flex items-center justify-between p-3 rounded-md border ${item.deleted ? 'opacity-60 bg-muted/30' : ''}`}>
-                     <div className="flex items-center gap-3">
-                       {!item.deleted && (
-                         <Checkbox checked={item.done} onCheckedChange={() => toggleDone(item.id)} aria-label={`Toggle ${item.text}`} />
-                       )}
-                       <div>
-                         <p className={`font-medium leading-none ${item.deleted ? 'line-through' : ''}`}>
-                           {item.text}
-                         </p>
-                         <p className="text-xs text-muted-foreground">
-                           Qty: {item.qty} {item.deleted && '• Removed'}
-                         </p>
-                       </div>
-                     </div>
-                     <div className="flex items-center gap-1">
-                       {item.deleted ? (
-                         <Button variant="outline" size="sm" onClick={() => restoreItem(item.id)} aria-label="Add back to list">
-                           <RotateCcw className="mr-1 h-3 w-3" />
-                           Add Back
-                         </Button>
-                       ) : (
-                         <>
-                           <Button variant="ghost" size="sm" onClick={() => updateQty(item.id, -1)} aria-label="Decrease quantity">-</Button>
-                           <Button variant="ghost" size="sm" onClick={() => updateQty(item.id, +1)} aria-label="Increase quantity">+</Button>
-                         </>
-                       )}
-                     </div>
-                   </li>
-                 ))}
-              </ul>
-
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Done: {completedCount} — {completedCount > 0 ? "Keep going!" : "Keep going"}
-                </p>
-                <Button variant="destructive" onClick={clearCompleted} disabled={completedCount === 0} aria-label="Clear completed" className="w-full sm:w-auto">
-                  <Trash2 className="mr-2 h-4 w-4" /> Clear completed
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+        {!pin ? (
+          <PinGateStage onPinSet={handlePinSet} />
+        ) : (
+          <ListStage
+            pin={pin}
+            isOnline={isOnline}
+            showAllItems={showAllItems}
+            setShowAllItems={setShowAllItems}
+            items={visibleItems}
+            allItems={allRoomItems}
+            text={text}
+            setText={setText}
+            addItem={addItem}
+            updateQty={updateQty}
+            toggleDone={toggleDone}
+            clearCompleted={clearCompleted}
+            restoreItem={restoreItem}
+            completedCount={completedCount}
+          />
+        )}
+        
+        <AppFooter />
       </main>
     </div>
   );
