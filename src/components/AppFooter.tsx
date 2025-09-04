@@ -59,40 +59,9 @@ export const AppFooter = () => {
   }, []);
 
   return (
-    <footer className="mt-16 pb-8">
-      {/* Pain Points Carousel */}
-      <div className="max-w-lg mx-auto mb-8">
-        <h3 className="text-center text-sm font-medium text-muted-foreground mb-4">
-          What this helps you avoid:
-        </h3>
-        <Carousel className="w-full" opts={{ align: "center", loop: true }}>
-          <CarouselContent className="-ml-2 md:-ml-4">
-            {painPoints.map((point, index) => {
-              const Icon = point.icon;
-              return (
-                <CarouselItem key={index} className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3">
-                  <Card className="h-full">
-                    <CardContent className="flex flex-col items-center p-4 text-center">
-                      <Icon className="h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-s text-muted-foreground leading-relaxed">
-                        {point.text}
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {point.subtext}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </CarouselItem>
-              );
-            })}
-          </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
-        </Carousel>
-      </div>
-
+    <footer className="mt-16 pb-8 w-full">
       {/* Use Case Hints */}
-      <div className="text-center">
+      <div className="text-center mb-8 px-4">
         <p className="text-xs text-muted-foreground mb-2">
           📌 People are using this right now to:
         </p>
@@ -102,6 +71,39 @@ export const AppFooter = () => {
               {useCase}
             </p>
           ))}
+        </div>
+      </div>
+
+      {/* Pain Points Carousel */}
+      <div className="w-full px-4">
+        <h3 className="text-center text-sm font-medium text-muted-foreground mb-4">
+          What this helps you avoid:
+        </h3>
+        <div className="max-w-6xl mx-auto">
+          <Carousel className="w-full" opts={{ align: "center", loop: true }}>
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {painPoints.map((point, index) => {
+                const Icon = point.icon;
+                return (
+                  <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                    <Card className="h-full">
+                      <CardContent className="flex flex-col items-center p-4 text-center">
+                        <Icon className="h-8 w-8 text-muted-foreground mb-2" />
+                        <p className="text-s text-muted-foreground leading-relaxed">
+                          {point.text}
+                        </p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {point.subtext}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </CarouselItem>
+                );
+              })}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
         </div>
       </div>
     </footer>
