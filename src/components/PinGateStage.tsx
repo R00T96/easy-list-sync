@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -12,9 +12,23 @@ function randomPin(): string {
 export const PinGateStage = () => {
   const [pin, setPin] = useState("");
   const { savePin } = usePin();
+  const otpRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Auto-focus PIN input when component mounts
+    if (otpRef.current) {
+      otpRef.current.focus();
+    }
+  }, []);
 
   const handleContinue = () => {
     if (pin.length === 6) savePin(pin);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && pin.length === 6) {
+      handleContinue();
+    }
   };
 
   const handleCreateNew = () => {
@@ -40,7 +54,14 @@ export const PinGateStage = () => {
           <div className="flex flex-col items-center gap-6">
             <div className="text-center space-y-2">
               <p className="text-sm font-medium">Enter a room code or start a fresh list</p>
-              <InputOTP maxLength={6} value={pin} onChange={setPin} aria-label="Room code">
+              <InputOTP 
+                ref={otpRef}
+                maxLength={6} 
+                value={pin} 
+                onChange={setPin} 
+                onKeyDown={handleKeyDown}
+                aria-label="Room code"
+              >
                 <InputOTPGroup>
                   <InputOTPSlot index={0} />
                   <InputOTPSlot index={1} />

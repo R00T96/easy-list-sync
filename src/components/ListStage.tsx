@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,24 @@ export const ListStage = ({
   actions
 }: ListStageProps) => {
   const { pin } = usePin();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Auto-focus add item input when ListStage loads
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  const handleAddItem = () => {
+    actions.addItem();
+    // Maintain focus after adding item
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 0);
+  };
   return (
     <section aria-labelledby="list-heading" className="mx-auto max-w-2xl">
       <Card className="shadow-sm">
@@ -60,16 +79,17 @@ export const ListStage = ({
           </div>
           <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-stretch">
             <Input
+              ref={inputRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Add something for the crew…"
               aria-label="Item name"
-              onKeyDown={(e) => { if (e.key === 'Enter') actions.addItem(); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAddItem(); }}
               className="w-full"
               autoComplete="off"
               enterKeyHint="done"
             />
-            <Button onClick={actions.addItem} aria-label="Add item" className="w-full sm:w-auto">
+            <Button onClick={handleAddItem} aria-label="Add item" className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" /> Add
             </Button>
           </div>
