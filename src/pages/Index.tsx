@@ -499,6 +499,19 @@ const Index = () => {
         
         <AppFooter />
       </main>
+      
+      <div className="border-t bg-muted/30 py-4">
+        <div className="container px-4 text-center">
+          <a 
+            href="https://ko-fi.com/romesh" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            ☕ Buy me a coffee
+          </a>
+        </div>
+      </div>
     </div>
   );
 };
