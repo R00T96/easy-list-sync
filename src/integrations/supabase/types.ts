@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      feedback: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          message: string
+          name: string | null
+          pin: string | null
+          social_link: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message: string
+          name?: string | null
+          pin?: string | null
+          social_link?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string
+          name?: string | null
+          pin?: string | null
+          social_link?: string | null
+        }
+        Relationships: []
+      }
       shopping_items: {
         Row: {
           client_id: string | null
