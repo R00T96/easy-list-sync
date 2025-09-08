@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { MessageCircleX, Brain, Luggage, Clock, Smartphone, X } from "lucide-react";
 import { usePin } from "@/hooks/usePin";
+import { createSupabaseWithHeaders } from "@/integrations/supabase/client";
 
 const painPoints = [
   {
@@ -49,6 +50,69 @@ export const AppFooter = () => {
   const { pin } = usePin();
   const [currentUseCases, setCurrentUseCases] = useState(useCases.slice(0, 3));
   const [isHidden, setIsHidden] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check if footer should be hidden based on PIN preferences
+  useEffect(() => {
+    const checkFooterPreference = async () => {
+      if (!pin) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const supabase = createSupabaseWithHeaders({ 'x-list-id': pin });
+        const { data, error } = await supabase
+          .from('pin_preferences')
+          .select('hide_footer')
+          .eq('pin', pin)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching preferences:', error);
+        } else if (data) {
+          setIsHidden(data.hide_footer);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkFooterPreference();
+  }, [pin]);
+
+  // Save footer preference to database
+  const handleHideFooter = async () => {
+    if (!pin) return;
+
+    try {
+      const supabase = createSupabaseWithHeaders({ 'x-list-id': pin });
+      
+      // First try to update existing preference
+      const { data: existing } = await supabase
+        .from('pin_preferences')
+        .select('id')
+        .eq('pin', pin)
+        .single();
+
+      if (existing) {
+        await supabase
+          .from('pin_preferences')
+          .update({ hide_footer: true })
+          .eq('pin', pin);
+      } else {
+        await supabase
+          .from('pin_preferences')
+          .insert({ pin, hide_footer: true });
+      }
+
+      setIsHidden(true);
+    } catch (error) {
+      console.error('Error saving preference:', error);
+    }
+  };
 
   // Rotate use cases every 4 seconds
   useEffect(() => {
@@ -61,7 +125,7 @@ export const AppFooter = () => {
     return () => clearInterval(interval);
   }, []);
 
-  if (isHidden) {
+  if (isHidden || isLoading) {
     return null;
   }
 
@@ -69,7 +133,7 @@ export const AppFooter = () => {
     <footer className="mt-16 pb-8 w-full relative">
       {pin && (
         <button
-          onClick={() => setIsHidden(true)}
+          onClick={handleHideFooter}
           className="absolute top-0 right-4 p-1 text-muted-foreground hover:text-foreground transition-colors"
           title="Hide footer"
         >

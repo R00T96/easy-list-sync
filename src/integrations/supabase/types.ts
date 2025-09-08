@@ -44,6 +44,30 @@ export type Database = {
         }
         Relationships: []
       }
+      pin_preferences: {
+        Row: {
+          created_at: string
+          hide_footer: boolean
+          id: string
+          pin: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hide_footer?: boolean
+          id?: string
+          pin: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hide_footer?: boolean
+          id?: string
+          pin?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       shopping_items: {
         Row: {
           client_id: string | null
