@@ -38,7 +38,7 @@
 
 ## Tech Stack
 - Vite + React + TypeScript + Tailwind CSS + shadcn/ui
-- Local storage for persistence.
+- Local storage for persistence.FUNDING.yml
 - Planned: Supabase for cloud sync.
 
 ## Getting Started
