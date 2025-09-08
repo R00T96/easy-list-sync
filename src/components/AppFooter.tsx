@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { MessageCircleX, Brain, Luggage, Clock, Smartphone } from "lucide-react";
+import { MessageCircleX, Brain, Luggage, Clock, Smartphone, X } from "lucide-react";
+import { usePin } from "@/hooks/usePin";
 
 const painPoints = [
   {
@@ -45,7 +46,9 @@ const useCases = [
 ];
 
 export const AppFooter = () => {
+  const { pin } = usePin();
   const [currentUseCases, setCurrentUseCases] = useState(useCases.slice(0, 3));
+  const [isHidden, setIsHidden] = useState(false);
 
   // Rotate use cases every 4 seconds
   useEffect(() => {
@@ -58,8 +61,22 @@ export const AppFooter = () => {
     return () => clearInterval(interval);
   }, []);
 
+  if (isHidden) {
+    return null;
+  }
+
   return (
-    <footer className="mt-16 pb-8 w-full">
+    <footer className="mt-16 pb-8 w-full relative">
+      {pin && (
+        <button
+          onClick={() => setIsHidden(true)}
+          className="absolute top-0 right-4 p-1 text-muted-foreground hover:text-foreground transition-colors"
+          title="Hide footer"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+      
       {/* Use Case Hints */}
       <div className="text-center mb-8 px-4">
         <p className="text-xs text-muted-foreground mb-2">
