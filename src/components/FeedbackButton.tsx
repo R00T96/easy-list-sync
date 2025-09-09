@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare } from "lucide-react";
+import { Megaphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePin } from "@/hooks/usePin";
 import { useToast } from "@/hooks/use-toast";
@@ -83,8 +83,9 @@ export const FeedbackButton = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" aria-label="Send Feedback">
-          <MessageSquare className="h-4 w-4" />
+        <Button variant="ghost" size="sm" aria-label="Send Feedback" className="gap-1">
+          <Megaphone className="h-4 w-4" />
+          <span className="text-xs">Request improvements</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

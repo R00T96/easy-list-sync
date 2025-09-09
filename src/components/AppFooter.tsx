@@ -4,6 +4,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { MessageCircleX, Brain, Luggage, Clock, Smartphone, X } from "lucide-react";
 import { usePin } from "@/hooks/usePin";
 import { createSupabaseWithHeaders } from "@/integrations/supabase/client";
+import { FeedbackButton } from "./FeedbackButton";
 
 const painPoints = [
   {
@@ -185,6 +186,22 @@ export const AppFooter = () => {
             <CarouselPrevious />
             <CarouselNext />
           </Carousel>
+        </div>
+      </div>
+      
+      {/* Footer Links */}
+      <div className="text-center mt-8 pt-4 border-t border-border/50">
+        <div className="flex justify-center items-center gap-4 text-sm text-muted-foreground">
+          <FeedbackButton />
+          <span>•</span>
+          <a 
+            href="https://buymeacoffee.com/yourhandle" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="hover:text-foreground transition-colors"
+          >
+            Buy me a coffee ☕
+          </a>
         </div>
       </div>
     </footer>
