@@ -3,8 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { MessageCircleX, Brain, Luggage, Clock, Smartphone, X } from "lucide-react";
 import { usePin } from "@/hooks/usePin";
-import { createSupabaseWithHeaders } from "@/integrations/supabase/client";
-import { FeedbackButton } from "./FeedbackButton";
 
 const painPoints = [
   {
@@ -50,70 +48,9 @@ const useCases = [
 export const AppFooter = () => {
   const { pin } = usePin();
   const [currentUseCases, setCurrentUseCases] = useState(useCases.slice(0, 3));
-  const [isHidden, setIsHidden] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Check if footer should be hidden based on PIN preferences
-  useEffect(() => {
-    const checkFooterPreference = async () => {
-      if (!pin) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const supabase = createSupabaseWithHeaders({ 'x-list-id': pin });
-        const { data, error } = await supabase
-          .from('pin_preferences')
-          .select('hide_footer')
-          .eq('pin', pin)
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching preferences:', error);
-        } else if (data) {
-          setIsHidden(data.hide_footer);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkFooterPreference();
-  }, [pin]);
-
-  // Save footer preference to database
-  const handleHideFooter = async () => {
-    if (!pin) return;
-
-    try {
-      const supabase = createSupabaseWithHeaders({ 'x-list-id': pin });
-      
-      // First try to update existing preference
-      const { data: existing } = await supabase
-        .from('pin_preferences')
-        .select('id')
-        .eq('pin', pin)
-        .single();
-
-      if (existing) {
-        await supabase
-          .from('pin_preferences')
-          .update({ hide_footer: true })
-          .eq('pin', pin);
-      } else {
-        await supabase
-          .from('pin_preferences')
-          .insert({ pin, hide_footer: true });
-      }
-
-      setIsHidden(true);
-    } catch (error) {
-      console.error('Error saving preference:', error);
-    }
-  };
+  // Hide footer if there's a PIN (simplified logic)
+  const shouldHideFooter = pin !== null;
 
   // Rotate use cases every 4 seconds
   useEffect(() => {
@@ -126,22 +63,13 @@ export const AppFooter = () => {
     return () => clearInterval(interval);
   }, []);
 
-  if (isHidden || isLoading) {
+  // Don't render if should hide
+  if (shouldHideFooter) {
     return null;
   }
 
   return (
-    <footer className="mt-16 pb-8 w-full relative">
-      {pin && (
-        <button
-          onClick={handleHideFooter}
-          className="absolute top-0 right-4 p-1 text-muted-foreground hover:text-foreground transition-colors"
-          title="Hide footer"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      )}
-      
+    <section className="mt-16 pb-8 w-full relative">
       {/* Use Case Hints */}
       <div className="text-center mb-8 px-4">
         <p className="text-xs text-muted-foreground mb-2">
@@ -188,22 +116,6 @@ export const AppFooter = () => {
           </Carousel>
         </div>
       </div>
-      
-      {/* Footer Links */}
-      <div className="text-center mt-8 pt-4 border-t border-border/50">
-        <div className="flex justify-center items-center gap-4 text-sm text-muted-foreground">
-          <FeedbackButton />
-          <span>•</span>
-          <a 
-            href="https://buymeacoffee.com/yourhandle" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="hover:text-foreground transition-colors"
-          >
-            Buy me a coffee ☕
-          </a>
-        </div>
-      </div>
-    </footer>
+    </section>
   );
 };

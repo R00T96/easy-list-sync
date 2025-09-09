@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Cloud } from "lucide-react";
 import { usePin } from "@/hooks/usePin";
 import { ThemeToggle } from "./ThemeToggle";
-import { FeedbackButton } from "./FeedbackButton";
 
 type HeaderProps = {
   isOnline: boolean;
@@ -38,7 +37,6 @@ export const Header = ({ isOnline, requestSync, isSyncing }: HeaderProps) => {
             </Button>
           </>
         )}
-        <FeedbackButton />
         <ThemeToggle />
       </div>
     </div>
