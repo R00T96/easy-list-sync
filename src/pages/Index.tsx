@@ -11,7 +11,7 @@ import { FeedbackButton } from "@/components/FeedbackButton";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 const Index = () => {
-  const { pin } = usePin();
+  const { pin, savePin } = usePin();
   const [items, setItems] = useState<ShoppingItem[]>([]);
   const [text, setText] = useState("");
   const [qty, setQty] = useState<number>(1);
@@ -19,6 +19,7 @@ const Index = () => {
   const PENDING: SyncStatus = "pending";
   const [isSyncing, setIsSyncing] = useState(false);
   const [showAllItems, setShowAllItems] = useState(false);
+  const [urlPin, setUrlPin] = useState<string | null>(null);
   const realtimeChannel = useRef<RealtimeChannel | null>(null);
   const isHandlingRealtimeUpdate = useRef(false);
   
@@ -36,9 +37,39 @@ const Index = () => {
   useEffect(() => { itemsRef.current = items; }, [items]);
   useEffect(() => { isSyncingRef.current = isSyncing; }, [isSyncing]);
 
+  // Process URL parameters on mount
+  useEffect(() => {
+    const processUrlParams = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const pinFromUrl = urlParams.get('pin');
+      
+      if (pinFromUrl && /^\d{6}$/.test(pinFromUrl)) {
+        // Only set URL PIN if we don't already have a PIN stored
+        if (!pin) {
+          setUrlPin(pinFromUrl);
+        }
+        
+        // Clean up URL by removing the pin parameter
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('pin');
+        window.history.replaceState({}, document.title, newUrl.toString());
+        
+        console.log(`🔗 Detected PIN from URL: ${pinFromUrl}`);
+      }
+    };
+
+    processUrlParams();
+  }, [pin]);
+
+  // Handler for PIN setting (from PinGate component)
+  const handlePinSet = (newPin: string) => {
+    savePin(newPin);
+    setUrlPin(null); // Clear URL pin after successful entry
+  };
+
   // SEO
   useEffect(() => {
-    const title = pin ? `Group Checklist — Room ${pin}` : "Group Checklist — Plan it in minutes, live it for hours";
+    const title = pin ? `Our List: ${pin}` : "Our List — From last-minute chaos to calm under 30 seconds";
     document.title = title;
     const desc = document.querySelector('meta[name="description"]');
     if (desc) desc.setAttribute("content", "Get 10+ brains on the same page in 10 seconds. No login, instant link share, works on any device.");
@@ -240,8 +271,6 @@ const Index = () => {
     setItems(next);           // Schedule state update
     saveItems(next);          // Persist to storage
   };
-
-  // Remove old PIN management functions since they're now in the hook
 
   const addItem = () => {
     if (!pin) {
@@ -482,8 +511,8 @@ const Index = () => {
       </header>
 
       <main className="container px-4 py-6 sm:py-10">
-        {!pin ? (
-          <PinGateStage />
+        {!pin || urlPin ? (
+          <PinGateStage onPinSet={handlePinSet} urlPin={urlPin}/>
         ) : (
           <ListStage
             isOnline={isOnline}
