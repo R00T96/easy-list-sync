@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { PinGateStage } from "@/components/PinGateStage";
 import { ListStage } from "@/components/ListStage";
 import { AppFooter } from "@/components/AppFooter";
+import { FeedbackButton } from "@/components/FeedbackButton";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 const Index = () => {
@@ -502,14 +503,18 @@ const Index = () => {
       
       <div className="border-t bg-muted/30 py-4">
         <div className="container px-4 text-center">
-          <a 
-            href="https://ko-fi.com/romesh" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ☕ Buy me a coffee
-          </a>
+          <div className="flex justify-center items-center gap-4">
+            <FeedbackButton />
+            <span className="text-muted-foreground">•</span>
+            <a 
+              href="https://ko-fi.com/romesh" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ☕ Buy me a coffee
+            </a>
+          </div>
         </div>
       </div>
     </div>
