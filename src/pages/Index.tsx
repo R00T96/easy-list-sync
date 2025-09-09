@@ -506,14 +506,12 @@ const Index = () => {
           <div className="flex justify-center items-center gap-4">
             <FeedbackButton />
             <span className="text-muted-foreground">•</span>
-            <a 
-              href="https://ko-fi.com/romesh" 
-              target="_blank" 
-              rel="noopener noreferrer"
+            <button 
+              onClick={() => (window as any).kofiWidgetOverlay?.show?.()}
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               ☕ Buy me a coffee
-            </a>
+            </button>
           </div>
         </div>
       </div>
