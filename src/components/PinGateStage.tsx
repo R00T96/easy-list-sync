@@ -49,7 +49,7 @@ export const PinGateStage = ({ onPinSet, urlPin }: PinGateProps) => {
     try {
       // Brief delay to show loading state
       await new Promise(resolve => setTimeout(resolve, 800));
-      onPinSet(urlPinValue);
+      onPinSet(p); // use the normalized, validated value
       toast({
         title: "🎉 Joined the list!",
         description: "You're now connected to the shared room.",
@@ -73,7 +73,7 @@ export const PinGateStage = ({ onPinSet, urlPin }: PinGateProps) => {
 
   const handleContinue = () => {
     const p = normalizePin(pin);
-    if (PIN_REGEX.test(p)) savePin(p);
+    if (PIN_REGEX.test(p)) onPinSet(p);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -137,6 +137,7 @@ export const PinGateStage = ({ onPinSet, urlPin }: PinGateProps) => {
                 onChange={(v) => setPin(normalizePin(v).replace(/[^A-Za-z0-9]/g, ""))}
                 onKeyDown={handleKeyDown}
                 aria-label="Room code"
+                inputMode="text" // so keyboards aren’t numeric-only
                 pattern="[A-Za-z0-9]*"          // hint to mobile keyboards
               >
                 <InputOTPGroup>

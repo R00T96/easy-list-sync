@@ -41,24 +41,29 @@ const Index = () => {
   useEffect(() => {
     const processUrlParams = () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const pinFromUrl = urlParams.get('pin');
-      
-      if (pinFromUrl && /^\d{6}$/.test(pinFromUrl)) {
-        // Only set URL PIN if we don't already have a PIN stored
-        if (!pin) {
-          setUrlPin(pinFromUrl);
-        }
-        
-        // Clean up URL by removing the pin parameter
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete('pin');
-        window.history.replaceState({}, document.title, newUrl.toString());
-        
-        console.log(`🔗 Detected PIN from URL: ${pinFromUrl}`);
+      const raw = urlParams.get("pin");
+      if (!raw) return;
+
+      const candidate = raw.trim().toUpperCase();
+      const isValid = /^[A-Z0-9]{6}$/.test(candidate);
+      if (!isValid) return;
+
+      // If already in a room and incoming is different, show PinGate for auto-join
+      if (!pin || pin !== candidate) {
+        console.log(`🔗 Switching to PIN from URL: ${candidate}`);
+        setUrlPin(candidate);
       }
+
+      // Clean up URL after capturing it
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete("pin");
+      window.history.replaceState({}, document.title, newUrl.toString());
+
+      console.log(`🔗 Detected PIN from URL: ${candidate}`);
     };
 
     processUrlParams();
+    // re-run when pin changes (e.g., to handle copy/paste navigation in SPA)
   }, [pin]);
 
   // Handler for PIN setting (from PinGate component)
