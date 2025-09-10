@@ -5,6 +5,7 @@ import { Cloud, Share, Check } from "lucide-react";
 import { usePin } from "@/hooks/usePin";
 import { ThemeToggle } from "./ThemeToggle";
 import { toast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 type HeaderProps = {
   isOnline: boolean;
@@ -119,6 +120,13 @@ export const Header = ({ isOnline, requestSync, isSyncing }: HeaderProps) => {
           </>
         )}
         <ThemeToggle />
+        {pin && (
+          <Link to="/privacy">
+            <Button variant="ghost" size="sm" className="text-xs">
+              Privacy
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   );

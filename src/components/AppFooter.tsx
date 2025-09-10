@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { MessageCircleX, Brain, Luggage, Clock, Smartphone, X } from "lucide-react";
 import { usePin } from "@/hooks/usePin";
+import { Link } from "react-router-dom";
 
 const painPoints = [
   {
@@ -115,6 +116,16 @@ export const AppFooter = () => {
             <CarouselNext />
           </Carousel>
         </div>
+      </div>
+
+      {/* Privacy Policy Link */}
+      <div className="text-center mt-8 pt-4 border-t border-border/50">
+        <Link 
+          to="/privacy" 
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
+        >
+          Privacy Policy
+        </Link>
       </div>
     </section>
   );
