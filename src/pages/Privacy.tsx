@@ -28,8 +28,7 @@ export default function Privacy() {
           <Shield className="h-16 w-16 mx-auto mb-4 text-primary" />
           <h2 className="text-3xl font-bold mb-4">Simple, Anonymous, Public</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Our shopping list app is designed to be completely anonymous and public by default. 
-            Here's exactly what that means for your privacy.
+            This shared list app is completely anonymous and public by design. Here’s exactly what that means for your privacy.
           </p>
         </div>
 
@@ -60,7 +59,7 @@ export default function Privacy() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <p>• Shopping list items (text, quantities)</p>
+              <p>• List items (text, quantities)</p>
               <p>• Anonymous usage patterns</p>
               <p>• Device type and browser info</p>
               <p>• Session timestamps</p>
@@ -81,11 +80,10 @@ export default function Privacy() {
             <div className="bg-orange-50 dark:bg-orange-950/30 p-4 rounded-lg">
               <p className="font-semibold mb-2">⚠️ Anyone with your PIN can access your list</p>
               <p className="text-sm text-muted-foreground">
-                Lists are NOT private. If someone has your 4-digit PIN, they can view and modify your shopping list. 
-                Only share PINs with people you trust.
+                Lists are NOT private. If someone has your 4-digit PIN, they can view and modify your list. Only share PINs with people you trust.
               </p>
             </div>
-            
+
             <div className="space-y-2">
               <p className="font-semibold">What you share is YOUR responsibility:</p>
               <ul className="text-sm text-muted-foreground space-y-1 ml-4">
@@ -109,7 +107,7 @@ export default function Privacy() {
             </CardHeader>
             <CardContent className="space-y-3">
               <p><strong>PIN System:</strong> Lists are identified by 4-digit PINs. Anyone with the PIN can access the list.</p>
-              <p><strong>Real-time Sync:</strong> Changes sync across all devices using the same PIN in real-time.</p>
+              <p><strong>Real-time Sync:</strong> Changes sync across all devices using the same PIN in real time.</p>
               <p><strong>No Accounts:</strong> There are no user accounts. Everything is anonymous and temporary.</p>
               <p><strong>Local Storage:</strong> Your device temporarily stores list data for offline use.</p>
             </CardContent>
@@ -123,7 +121,7 @@ export default function Privacy() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p><strong>Lists & Items:</strong> All list content (whether shopping, tasks, or other notes) is stored indefinitely until manually deleted by users.</p>
+              <p><strong>Lists & Items:</strong> All list content (shopping, tasks, chores, notes, or other entries) is stored indefinitely until manually deleted by users.</p>
               <p><strong>Usage Analytics:</strong> Anonymous usage patterns may be kept for improving the service.</p>
               <p><strong>Local Data:</strong> Cleared when you clear your browser data or switch devices.</p>
               <p><strong>No Backup:</strong> We don't backup your lists. If you lose your PIN, your list is gone.</p>
@@ -135,10 +133,10 @@ export default function Privacy() {
               <CardTitle>Future Features</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p><strong>AI Suggestions:</strong> We plan to add anonymous AI-powered shopping suggestions based on usage patterns.</p>
+              <p><strong>AI Suggestions:</strong> We plan to add anonymous AI-powered suggestions based on usage patterns.</p>
               <p><strong>Event Streaming:</strong> Anonymous usage events may be analyzed to improve suggestions.</p>
-              <p><strong>Always Anonymous:</strong> Any future features will maintain the same anonymous, privacy-first approach.</p>
               <p><strong>Notifications (planned):</strong> If browser notifications are added, they will be optional and require your explicit permission.</p>
+              <p><strong>Optional Private Version:</strong> We may offer a paid version that allows users to keep lists private. If introduced, it will have a separate privacy policy and data handling practices.</p>
             </CardContent>
           </Card>
 
