@@ -1,7 +1,8 @@
 # Easy List Sync — MVP Spec
 
 ## Overview
-- Offline-first shopping list with cloud sync.
+- Offline-first **shared list** app with cloud sync.
+- Works for shopping, to-dos, chores, reminders, or any simple list you want to share.
 - Single shared list UI focused on speed, simplicity, and reliability.
 - Designed for quick add/check-off, minimal distractions.
 

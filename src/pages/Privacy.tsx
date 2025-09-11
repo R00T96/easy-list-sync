@@ -123,7 +123,7 @@ export default function Privacy() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p><strong>Shopping Lists:</strong> Stored indefinitely until manually deleted by users.</p>
+              <p><strong>Lists & Items:</strong> All list content (whether shopping, tasks, or other notes) is stored indefinitely until manually deleted by users.</p>
               <p><strong>Usage Analytics:</strong> Anonymous usage patterns may be kept for improving the service.</p>
               <p><strong>Local Data:</strong> Cleared when you clear your browser data or switch devices.</p>
               <p><strong>No Backup:</strong> We don't backup your lists. If you lose your PIN, your list is gone.</p>
@@ -138,6 +138,7 @@ export default function Privacy() {
               <p><strong>AI Suggestions:</strong> We plan to add anonymous AI-powered shopping suggestions based on usage patterns.</p>
               <p><strong>Event Streaming:</strong> Anonymous usage events may be analyzed to improve suggestions.</p>
               <p><strong>Always Anonymous:</strong> Any future features will maintain the same anonymous, privacy-first approach.</p>
+              <p><strong>Notifications (planned):</strong> If browser notifications are added, they will be optional and require your explicit permission.</p>
             </CardContent>
           </Card>
 
@@ -148,8 +149,11 @@ export default function Privacy() {
             <CardContent className="space-y-3">
               <p><strong>Use at Your Own Risk:</strong> This app is provided "as is" without warranties of any kind.</p>
               <p><strong>No Security Guarantees:</strong> While we implement reasonable security measures, we cannot guarantee complete data security.</p>
-              <p><strong>User Responsibility:</strong> You are responsible for what information you choose to share.</p>
-              <p><strong>No Liability:</strong> We are not liable for any data loss, unauthorized access, or misuse of shared information.</p>
+              <p><strong>Not for Sensitive Data:</strong> This app is not designed for storing or sharing confidential, medical, financial, or personally identifiable information. Do not use it for these purposes.</p>
+              <p><strong>User Responsibility:</strong> You are solely responsible for the content you enter and share. Treat all lists as public information.</p>
+              <p><strong>No Endorsement of Shared Content:</strong> The developers and maintainers do not review or moderate content. Any information you or others add is your own responsibility.</p>
+              <p><strong>Open Source Notice:</strong> This application is open source. If you use a version hosted or modified by a third party, we are not responsible for that deployment or its data handling practices.</p>
+              <p><strong>Limitation of Liability:</strong> To the maximum extent permitted by law, the developers are not liable for any direct, indirect, incidental, or consequential damages arising from the use or misuse of this app.</p>
               <p><strong>Service Availability:</strong> We may discontinue the service at any time without notice.</p>
             </CardContent>
           </Card>
