@@ -137,7 +137,6 @@ export default function Privacy() {
               <p><strong>Event Streaming:</strong> Anonymous usage events may be analyzed to improve suggestions.</p>
               <p><strong>Notifications (planned):</strong> If browser notifications are added, they will be optional and require your explicit permission.</p>
               <p><strong>Optional Private Version:</strong> We may offer a paid version that allows users to keep lists private. If introduced, it will have a separate privacy policy and data handling practices.</p>
-              <p><strong>Notifications (planned):</strong> If browser notifications are added, they will be optional and require your explicit permission.</p>
             </CardContent>
           </Card>
 
