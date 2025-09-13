@@ -71,15 +71,16 @@ function OpenListInner() {
       });
       form.reset();
       // background push; user doesn’t need a toast here
-      syncSoon(200, true);
+      syncSoon(250, { silent: true, toastOnPush: true });
     },
     updateQty: (id: string, delta: number) => {
       updateQtyLocal(id, delta);
-      syncSoon(250, true);
+      // coalesce rapid taps; still shows "Synced" toast on push completion
+      syncSoon(120, { silent: true, toastOnPush: true });
     },
     toggleDone: (id: string) => {
       toggleDoneLocal(id);
-      syncSoon(250, true);
+      syncSoon(250, { silent: true, toastOnPush: true });
     },
     clearCompleted: () => {
       if (!pin) return;
@@ -90,11 +91,11 @@ function OpenListInner() {
           description: "Completed items removed for everyone.",
         });
       }
-      syncSoon(250, true);
+      syncSoon(250, { silent: true, toastOnPush: true });
     },
     restoreItem: (id: string) => {
       restoreItemLocal(id);
-      syncSoon(250, true);
+      syncSoon(250, { silent: true, toastOnPush: true });
     },
   };
 
