@@ -4,7 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import Layout from "@/components/Layout/Layout";
 import Index from "./pages/Index";
+import OpenList from "./pages/OpenList";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import { PinProvider } from "@/hooks/usePin";
@@ -20,14 +22,26 @@ const App = () => (
       disableTransitionOnChange
     >
       <TooltipProvider>
-          <PinProvider>
+        <PinProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/privacy" element={<Privacy />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              {/* All routes wrapped in Layout */}
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Index />} />
+                <Route path="open" element={<OpenList />} />
+                <Route path="privacy" element={<Privacy />} />
+              </Route>
+              
+              {/* Routes that should NOT have sidebar (if any) */}
+              {/* 
+              <Route path="/auth/login" element={<Login />} />
+              <Route path="/auth/register" element={<Register />} />
+              <Route path="/onboarding" element={<Onboarding />} />
+              */}
+              
+              {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
