@@ -1,7 +1,6 @@
-// hooks/useSync.ts
-// Debounced, silent background syncs + manual foreground sync with toast.
-// Guards against concurrent runs and avoids toast spam.
-
+// This wraps the service, handles online/offline + guards, and commits authoritative merges through the ShoppingList context. 
+// It replaces Index’s many effects and refs.
+// hooks/useSync.ts (minimal diff)
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useShoppingList } from "@/contexts/ShoppingListContext";
@@ -35,19 +34,13 @@ export function useSync() {
     async (opts?: SyncOptions) => {
       const silent = !!opts?.silent;
 
-      // Basic guards
-      if (!pin) {
-        if (!silent) toast({ title: "Join a room", description: "Pick a room to sync progress." });
-        return;
-      }
-      if (!isOnline) {
-        if (!silent) toast({ title: "You’re offline", description: "I’ll sync as soon as you’re back online." });
-        return;
-      }
+      if (!pin) { if (!silent) toast({ title: "Join a room", description: "Pick a room to sync progress." }); return; }
+      if (!isOnline) { if (!silent) toast({ title: "You’re offline", description: "I’ll sync as soon as you’re back online." }); return; }
       if (isSyncingRef.current) return;
 
       isSyncingRef.current = true;
-      setIsSyncing(true);
+      if (!silent) setIsSyncing(true);             // <-- only show busy for foreground syncs
+
 
       // Snapshot local once for a consistent view
       const local = getLocal();
@@ -63,7 +56,6 @@ export function useSync() {
 
         const others = local.filter(i => i.list_id !== pin);
         const merged = [...mergedForPin, ...others];
-
         setItemsHard(merged);
 
         // Only toast if this was user-triggered OR we actually pushed something
@@ -74,12 +66,10 @@ export function useSync() {
           });
         }
       } catch (e: any) {
-        if (!silent) {
-          toast({ title: "Sync failed", description: e?.message || "Please try again." });
-        }
+        if (!silent) toast({ title: "Sync failed", description: e?.message || "Please try again." });
       } finally {
         isSyncingRef.current = false;
-        setIsSyncing(false);
+        if (!silent) setIsSyncing(false);          // <-- don’t flicker the header for background syncs
       }
     },
     [pin, isOnline, getLocal, setItemsHard]
@@ -120,11 +110,5 @@ export function useSync() {
     lastHadPendingRef.current = hasPending;
   }, [isOnline, pin, items, syncSoon]);
 
-  return {
-    isOnline,
-    isSyncing,
-    syncNow,   // caller can pass { silent: false } for foreground sync with toast
-    syncSoon,  // debounced background syncs
-    clientId: clientIdRef.current,
-  };
+  return { isOnline, isSyncing, syncNow, syncSoon, clientId: clientIdRef.current };
 }
