@@ -4,7 +4,6 @@ import { loadItems, saveItems, type ShoppingItem, type SyncStatus } from "@/stor
 
 type Ctx = {
   items: ShoppingItem[];
-  itemsRef: React.MutableRefObject<ShoppingItem[]>;
   setItemsHard: (next: ShoppingItem[]) => void; // used by sync/realtime to commit authoritative merges
   addItemLocal: (item: Omit<ShoppingItem, "id" | "updated_at" | "syncStatus">) => ShoppingItem;
   toggleDoneLocal: (id: string) => void;
@@ -21,21 +20,9 @@ export const useShoppingList = () => {
 };
 
 export const ShoppingListProvider = ({ children }: { children: ReactNode }) => {
-  console.log('[ShoppingListProvider] Initializing shopping list context');
-
-  const [items, setItems] = useState<ShoppingItem[]>(() => {
-    const loadedItems = loadItems();
-    console.log('[ShoppingListProvider] Loaded items:', loadedItems);
-    return loadedItems;
-  });
-
+  const [items, setItems] = useState<ShoppingItem[]>(() => loadItems());
   const itemsRef = useRef(items);
-  const setItemsHard = (next: ShoppingItem[]) => {
-    console.log('[ShoppingListProvider] Setting items:', next);
-    itemsRef.current = next;
-    setItems(next);
-    saveItems(next);
-  };
+  const setItemsHard = (next: ShoppingItem[]) => { itemsRef.current = next; setItems(next); saveItems(next); };
 
   const stamp = () => new Date().toISOString();
 
@@ -47,19 +34,16 @@ export const ShoppingListProvider = ({ children }: { children: ReactNode }) => {
       syncStatus: "pending",
     };
     const merged = [next, ...itemsRef.current];
-    console.log('[ShoppingListProvider] Adding item locally:', next);
     setItemsHard(merged);
     return next;
   };
 
   const toggleDoneLocal = (id: string) => {
-    console.log('[ShoppingListProvider] Toggling done for item ID:', id);
     const merged = itemsRef.current.map(i => i.id === id ? { ...i, done: !i.done, updated_at: stamp(), syncStatus: "pending" as SyncStatus } : i);
     setItemsHard(merged);
   };
 
   const updateQtyLocal = (id: string, delta: number) => {
-    console.log('[ShoppingListProvider] Updating quantity for item ID:', id, 'Delta:', delta);
     const merged = itemsRef.current.map(i => i.id === id ? { ...i, qty: Math.max(1, i.qty + delta), updated_at: stamp(), syncStatus: "pending" as SyncStatus } : i);
     setItemsHard(merged);
   };
@@ -83,7 +67,6 @@ export const ShoppingListProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo<Ctx>(() => ({
     items,
-    itemsRef,
     setItemsHard,
     addItemLocal,
     toggleDoneLocal,

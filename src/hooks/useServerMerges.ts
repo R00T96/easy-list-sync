@@ -6,7 +6,7 @@ import { usePin } from "@/hooks/usePin";
 
 export function useServerMerges(clientId: string) {
   const { pin } = usePin();
-  const { setItemsHard, itemsRef } = useShoppingList(); // Access itemsRef from context
+  const { items, setItemsHard } = useShoppingList();
 
   const upsertFromServer = useCallback((row: any) => {
     if (!pin || !row || row.list_id !== pin) return;
@@ -23,8 +23,9 @@ export function useServerMerges(clientId: string) {
       syncStatus: "synced",
     };
 
-    const local = [...itemsRef.current];
+    const local = [...items];
     const idx = local.findIndex(i => i.id === serverItem.id);
+
     if (idx >= 0) {
       const li = local[idx];
       const localIsPending = li.syncStatus === "pending";
@@ -36,16 +37,16 @@ export function useServerMerges(clientId: string) {
     } else {
       setItemsHard([serverItem, ...local]);
     }
-  }, [pin, setItemsHard, itemsRef, clientId]);
+  }, [pin, items, setItemsHard, clientId]);
 
   const applyServerDelete = useCallback((row: any) => {
     if (!pin || !row || row.list_id !== pin) return;
-    const local = [...itemsRef.current];
+    const local = [...items];
     const idx = local.findIndex(i => i.id === String(row.id));
     if (idx === -1) return;
     local[idx] = { ...local[idx], deleted: true, syncStatus: "synced", updated_at: new Date().toISOString() };
     setItemsHard(local);
-  }, [pin, setItemsHard, itemsRef]);
+  }, [pin, items, setItemsHard]);
 
   return { upsertFromServer, applyServerDelete };
 }

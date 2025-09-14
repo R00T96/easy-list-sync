@@ -25,14 +25,12 @@ export function useRealtimeSync(
   const lastSubscribedPinRef = useRef<string | null>(null);
 
   useEffect(() => {
-  if (!pin) return;
+    if (!pin) return;
 
-  console.log('[RealtimeSync] Subscribing to pin:', pin);
-  // (Re)subscribe only when the PIN changes
-  if (chRef.current) { chRef.current.unsubscribe(); chRef.current = null; }
+    // (Re)subscribe only when the PIN changes
+    if (chRef.current) { chRef.current.unsubscribe(); chRef.current = null; }
 
-  chRef.current = subscribeShoppingItems(pin, (payload) => {
-      console.log('[RealtimeSync] Received payload:', payload);
+    chRef.current = subscribeShoppingItems(pin, (payload) => {
       if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
         upsertRef.current(payload.new);
       } else if (payload.eventType === "DELETE") {

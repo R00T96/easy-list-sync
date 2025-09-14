@@ -117,11 +117,6 @@ export const Header = ({ isOnline, requestSync, isSyncing }: HeaderProps) => {
             >
               <Cloud className="mr-2 h-4 w-4" /> Sync
             </Button>
-            {/* {pin && permission !== "granted" && (
-              <Button variant="ghost" size="sm" onClick={enable} title="Enable notifications">
-                Enable Notifications
-              </Button>
-            )} */}
           </>
         )}
         <ThemeToggle />
