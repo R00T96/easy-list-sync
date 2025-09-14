@@ -1,1 +1,24 @@
-MIT (core) + BUSL/CommonsClause for /apps/lovable-api
+# License
+
+This project uses a **dual / component-based licensing model**:
+
+- **Core UI Application**: Licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.  
+  - This ensures that anyone who modifies and hosts the application as a service must also release their changes under the same license.  
+  - See [AGPL-3.0 License](https://www.gnu.org/licenses/agpl-3.0.html) for details.
+
+- **Shared Core Libraries** (where specified): Licensed under the **MIT License**.  
+  - This provides a permissive license allowing reuse in other projects with minimal restriction.  
+  - See [MIT License](https://opensource.org/licenses/MIT) for details.
+
+- **/api/ava**: Licensed under **Business Source License (BUSL-1.1)** with the **Commons Clause**.  
+  - Source code is available, but commercial use is restricted.  
+  - The BUSL terms apply until the Change Date defined in its license file.  
+  - See [BUSL-1.1](https://mariadb.com/bsl11/) and [Commons Clause](https://commonsclause.com/) for details.
+
+---
+
+### Summary
+
+- UI front-end: **AGPL-3.0**  
+- Core modules (where marked): **MIT**  
+- `/api/ava`: **BUSL-1.1 + Commons Clause**
