@@ -7,6 +7,8 @@ import { AppFooter } from "@/components/AppFooter";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import { ShoppingListProvider, useShoppingList } from "@/contexts/ShoppingListContext";
+
+import { useNotifications } from "@/hooks/useNotifications";
 import { usePin } from "@/hooks/usePin";
 import { useSync } from "@/hooks/useSync";                // expects { isOnline,isSyncing,syncNow(opts),syncSoon,clientId }
 import { useServerMerges } from "@/hooks/useServerMerges";
@@ -22,13 +24,15 @@ import { useItemForm } from "@/hooks/useItemForm";
 function OpenListInner() {
   const [showAllItems, setShowAllItems] = useState(false);
   const { pin, savePin } = usePin();
+  console.log('[OpenList] Current PIN:', pin);
   const { urlPin, clearUrlPin } = useUrlPin();
   const form = useItemForm(1);
 
   const { items, addItemLocal, toggleDoneLocal, updateQtyLocal, clearCompletedLocal, restoreItemLocal } = useShoppingList();
   const { isOnline, isSyncing, syncNow, syncSoon, clientId } = useSync();
   const { upsertFromServer, applyServerDelete } = useServerMerges(clientId);
-
+  const { permission, enable } = useNotifications(clientId);
+  
   // SEO
   useSEO(
     pin ? `Our List: ${pin}` : "Our List — From last-minute chaos to group calm in seconds",
@@ -133,6 +137,17 @@ function OpenListInner() {
           />
         )}
         <AppFooter />
+        {permission !== "granted" && (
+          <div className="mt-4 flex justify-center">
+            <button
+              type="button"
+              className="px-4 py-2 rounded bg-primary text-primary-foreground shadow hover:bg-primary/90 transition"
+              onClick={enable}
+            >
+              Enable Browser Notifications
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );

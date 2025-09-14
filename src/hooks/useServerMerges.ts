@@ -6,7 +6,7 @@ import { usePin } from "@/hooks/usePin";
 
 export function useServerMerges(clientId: string) {
   const { pin } = usePin();
-  const { getItems, setItemsHard } = useShoppingList(); // ensure context exposes getItems()
+  const { setItemsHard, itemsRef } = useShoppingList(); // Access itemsRef from context
 
   const upsertFromServer = useCallback((row: any) => {
     if (!pin || !row || row.list_id !== pin) return;
@@ -23,39 +23,29 @@ export function useServerMerges(clientId: string) {
       syncStatus: "synced",
     };
 
-    const local = [...getItems()];
+    const local = [...itemsRef.current];
     const idx = local.findIndex(i => i.id === serverItem.id);
-
     if (idx >= 0) {
       const li = local[idx];
-
-      // 🔒 PENDING-WINS: never override local pending with server
-      if (li.syncStatus === "pending") return;
-
-      // Otherwise LWW against server timestamp
-      const serverTime = +new Date(serverItem.updated_at);
-      const localTime  = +new Date(li.updated_at);
-      if (serverTime > localTime) {
-        local[idx] = serverItem;
-        setItemsHard(local);
-      }
+      const localIsPending = li.syncStatus === "pending";
+      const serverTime = new Date(serverItem.updated_at).getTime();
+      const localTime = new Date(li.updated_at).getTime();
+      if (localIsPending && localTime >= serverTime) return; // keep newer local
+      local[idx] = serverItem;
+      setItemsHard(local);
     } else {
       setItemsHard([serverItem, ...local]);
     }
-  }, [pin, getItems, setItemsHard, clientId]);
+  }, [pin, setItemsHard, itemsRef, clientId]);
 
   const applyServerDelete = useCallback((row: any) => {
     if (!pin || !row || row.list_id !== pin) return;
-    const local = [...getItems()];
+    const local = [...itemsRef.current];
     const idx = local.findIndex(i => i.id === String(row.id));
     if (idx === -1) return;
-
-    // Don’t override a pending local resurrection with a server delete
-    if (local[idx].syncStatus === "pending") return;
-
     local[idx] = { ...local[idx], deleted: true, syncStatus: "synced", updated_at: new Date().toISOString() };
     setItemsHard(local);
-  }, [pin, getItems, setItemsHard]);
+  }, [pin, setItemsHard, itemsRef]);
 
   return { upsertFromServer, applyServerDelete };
 }
