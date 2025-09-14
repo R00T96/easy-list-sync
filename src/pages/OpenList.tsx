@@ -1,5 +1,5 @@
 // pages/OpenList.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { PinGateStage } from "@/components/PinGateStage";
 import { ListStage } from "@/components/ListStage";
@@ -21,6 +21,8 @@ import { useItemForm } from "@/hooks/useItemForm";
 
 function OpenListInner() {
   const [showAllItems, setShowAllItems] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>("default");
+  
   const { pin, savePin } = usePin();
   const { urlPin, clearUrlPin } = useUrlPin();
   const form = useItemForm(1);
@@ -28,6 +30,13 @@ function OpenListInner() {
   const { items, addItemLocal, toggleDoneLocal, updateQtyLocal, clearCompletedLocal, restoreItemLocal } = useShoppingList();
   const { isOnline, isSyncing, syncNow, syncSoon, clientId } = useSync();
   const { upsertFromServer, applyServerDelete } = useServerMerges(clientId);
+
+  // Check notification permission on mount
+  useEffect(() => {
+    if ("Notification" in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
 
   // SEO
   useSEO(
@@ -53,6 +62,49 @@ function OpenListInner() {
   const itemsForList = showAllItems ? roomItems : activeItems;
   const completedCount = itemsForList.filter(i => i.done).length;
 
+  const requestNotificationPermission = async () => {
+    if (!("Notification" in window)) {
+      toast({
+        title: "Not Supported",
+        description: "Your browser doesn't support notifications.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      
+      if (permission === "granted") {
+        toast({
+          title: "Notifications Enabled",
+          description: "You'll now receive notifications for list updates.",
+        });
+        
+        // Show test notification
+        setTimeout(() => {
+          new Notification("Our List", {
+            body: "Notifications are working! You'll be notified when items are added or updated.",
+            icon: "/favicon.ico", // Adjust path as needed
+            badge: "/favicon.ico"
+          });
+        }, 1000);
+      } else if (permission === "denied") {
+        toast({
+          title: "Notifications Blocked",
+          description: "You can enable notifications in your browser settings if you change your mind.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to request notification permission.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const actions = {
     addItem: () => {
@@ -70,7 +122,7 @@ function OpenListInner() {
         client_id: clientId,
       });
       form.reset();
-      // background push; user doesn’t need a toast here
+      // background push; user doesn't need a toast here
       syncSoon(200, true);
     },
     updateQty: (id: string, delta: number) => {
@@ -98,12 +150,12 @@ function OpenListInner() {
     },
   };
 
-  // Manual “Sync” button should be a foreground, non-silent sync so the user gets feedback
+  // Manual "Sync" button should be a foreground, non-silent sync so the user gets feedback
   const requestSync = () => {
     if (!isOnline) {
       toast({
-        title: "You’re offline",
-        description: "Changes will sync the moment you’re back online.",
+        title: "You're offline",
+        description: "Changes will sync the moment you're back online.",
       });
       return;
     }
@@ -132,6 +184,34 @@ function OpenListInner() {
           />
         )}
         <AppFooter />
+        
+        {/* Notification Permission Button */}
+        {("Notification" in window) && notificationPermission === "default" && (
+          <div className="container px-4 py-4">
+            <div className="flex justify-center">
+              <button
+                onClick={requestNotificationPermission}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 17h5l-5 5v-5zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Enable Notifications
+              </button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
