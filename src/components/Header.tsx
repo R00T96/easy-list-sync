@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Cloud, Share, Check } from "lucide-react";
+import { Share, Check } from "lucide-react";
 import { usePin } from "@/hooks/usePin";
 import { ThemeToggle } from "./ThemeToggle";
 import { toast } from "@/hooks/use-toast";
@@ -9,11 +9,9 @@ import { Link } from "react-router-dom";
 
 type HeaderProps = {
   isOnline: boolean;
-  requestSync: () => void;
-  isSyncing: boolean;
 };
 
-export const Header = ({ isOnline, requestSync, isSyncing }: HeaderProps) => {
+export const Header = ({ isOnline }: HeaderProps) => {
   const { pin, clearPin } = usePin();
   const [isSharing, setIsSharing] = useState(false);
   const [justShared, setJustShared] = useState(false);
@@ -27,15 +25,26 @@ export const Header = ({ isOnline, requestSync, isSyncing }: HeaderProps) => {
     try {
       // Try to use Clipboard API
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(shareUrl);
-        
-        setJustShared(true);
-        setTimeout(() => setJustShared(false), 2000);
-        
-        toast({
-          title: "🔗 Share link copied!",
-          description: "Send this link to others so they can join your list instantly.",
-        });
+        const shareData = {
+          title: 'Join my list',
+          text: `Join my shared list with code: ${pin}`,
+          url: shareUrl,
+        };
+
+        if (navigator.share) {
+          try {
+            await navigator.share(shareData);
+            setJustShared(true);
+            setTimeout(() => setJustShared(false), 2000);
+            
+            // toast({
+            //   title: "🔗 Share link copied!",
+            //   description: "Send this link to others so they can join your list instantly.",
+            // });
+          } catch (err) {
+            console.log('Share cancelled');
+          }
+        }
       } else {
         // Fallback: Select text method
         const textArea = document.createElement('textarea');
@@ -81,44 +90,32 @@ export const Header = ({ isOnline, requestSync, isSyncing }: HeaderProps) => {
 
   return (
     <div className="container px-4 py-4 flex items-center justify-between gap-3">
-      <h1 className="text-2xl md:text-3xl font-bold">Our List</h1>
+      {!pin && <h1 className="text-2xl md:text-3xl font-bold">Live List</h1>}
+      {pin && (
+      <>
+        <h1 className="text-2xl md:text-3xl font-bold">Our List: {pin}</h1>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleShare}
+            disabled={isSharing}
+            aria-label="Share list link"
+            title="Copy shareable link"
+          >
+            {justShared ? <Check className="h-4 w-4" /> : <Share className="h-4 w-4" />}
+            {justShared ? "Copied!" : "Share"}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={clearPin} aria-label="Change List" title="Change List">
+            Switch
+          </Button>
+      </div>
+      </>
+    )}
       <div className="flex items-center gap-2">
         <Badge variant={isOnline ? "default" : "secondary"}>
           {isOnline ? "Live" : "Offline"}
         </Badge>
-        {pin && (
-          <>
-            <span className="text-sm text-muted-foreground">Room: {pin}</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleShare}
-              disabled={isSharing}
-              aria-label="Share room link"
-              title="Copy shareable link"
-            >
-              {justShared ? (
-                <Check className="h-4 w-4" />
-              ) : (
-                <Share className="h-4 w-4" />
-              )}
-              {justShared ? "Copied!" : "Share"}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={clearPin} aria-label="Change Room">
-              Switch
-            </Button>
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              onClick={requestSync} 
-              disabled={!isOnline || isSyncing} 
-              aria-label="Sync progress" 
-              aria-busy={isSyncing}
-            >
-              <Cloud className="mr-2 h-4 w-4" /> Sync
-            </Button>
-          </>
-        )}
         <ThemeToggle />
         {pin && (
           <Link to="/privacy">
