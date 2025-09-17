@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,26 @@ export const ListStage = ({
 }: ListStageProps) => {
   const { pin } = usePin();
   const inputRef = useRef<HTMLInputElement>(null);
+  const placeholderOptions = [
+    "Add milk to the list…",
+    "Plan a group dinner…",
+    "Assign a chore to someone…",
+    "Add a party supply…",
+    "Suggest a movie night…",
+    "Add a travel item…",
+    "Add a to-do for everyone…",
+    "Try: groceries, chores, party prep…",
+    "Try: trip plans, errands, to-dos…"
+  ];
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  
+  useEffect(() => {
+    if (text) return; // Don't rotate if user is typing
+    const interval = setInterval(() => {
+      setPlaceholderIdx((i) => (i + 1) % placeholderOptions.length);
+    }, 2200);
+    return () => clearInterval(interval);
+  }, [text]);
 
   useEffect(() => {
     // Auto-focus add item input when ListStage loads
@@ -62,27 +82,22 @@ export const ListStage = ({
       <Card className="shadow-sm">
 
         <CardHeader>
-            <CardTitle id="list-heading">
-              Just type. Hit add. Everyone sees it live.
-            </CardTitle>
-            <CardDescription id="list-description">
-              Tap [✓] when it's done — no repeats, no missed items.
-            </CardDescription>
-          </CardHeader>
-        
+          <CardTitle id="list-heading">
+            Add an item. Everyone sees it instantly.
+          </CardTitle>
+          <CardDescription id="list-description">
+            Tap [✓] to check off. No repeats, nothing missed.
+          </CardDescription>
+        </CardHeader>
+
         <CardContent>
-          {/* Inline guidance banner for new users */}
-          <div className="mb-4 p-3 bg-muted/50 rounded-lg border border-muted">
-            <p className="text-sm text-muted-foreground">
-              💡 <b>Stuck?</b> Try groceries, chores, party prep, trip plans, to-dos, errands…
-            </p>
-          </div>
+
           <div className="flex flex-col gap-2 mb-6 sm:flex-row sm:items-stretch">
             <Input
               ref={inputRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Add something for the crew…"
+              placeholder={placeholderOptions[placeholderIdx]}
               aria-label="Item name"
               onKeyDown={(e) => { if (e.key === 'Enter') handleAddItem(); }}
               className="w-full"
@@ -93,24 +108,25 @@ export const ListStage = ({
               <Plus className="mr-2 h-4 w-4" /> Add
             </Button>
           </div>
-
-          <div className="flex items-center justify-between mb-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setShowAllItems(!showAllItems)}
-              className="text-sm"
-            >
-              <History className="mr-2 h-4 w-4" />
-              {showAllItems ? "Show Active Only" : "View All Items"}
-            </Button>
-            {showAllItems && (
-              <p className="text-xs text-muted-foreground">
-                Showing {allItems.length} total items
-              </p>
+          {items.length > 0 && (
+              <div className="flex items-center justify-between mb-4">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowAllItems(!showAllItems)}
+                  className="text-sm"
+                >
+                  <History className="mr-2 h-4 w-4" />
+                  {showAllItems ? "Show Active Only" : "View All Items"}
+                </Button>
+                {showAllItems && (
+                  <p className="text-xs text-muted-foreground">
+                    Showing {allItems.length} total items
+                  </p>
+                )}
+              </div>
             )}
-          </div>
-
+          
           <ul className="space-y-3">
             {items.length === 0 && (
               <li className="text-muted-foreground text-sm">Your list is empty. Add your first item!</li>
