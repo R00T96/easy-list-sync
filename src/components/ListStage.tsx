@@ -77,6 +77,73 @@ export const ListStage = ({
       }
     }, 0);
   };
+
+  
+  // Demo seed lists
+  const seedLists = [
+    {
+      category: "Student Research",
+      items: [
+        { text: "📚 Find journal articles on AI ethics" },
+        { text: "📝 Summarize lecture notes" },
+        { text: "📊 Collect data for statistics assignment" },
+        { text: "🔍 Verify sources for essay" }
+      ]
+    },
+    {
+      category: "Wellbeing & Energy",
+      items: [
+        { text: "💧 Drink 2L water (remind your group!)" },
+        { text: "🧘 10 min meditation together" },
+        { text: "🎶 Play a focus playlist for all" },
+        { text: "🌳 Walk outside for fresh air (sync break)" }
+      ]
+    },
+    {
+      category: "Money Watchlist",
+      items: [
+        { text: "💳 Check credit card statement (group review)" },
+        { text: "📉 Track investment losses (share insights)" },
+        { text: "⚠️ Review pending bills (remind each other)" },
+        { text: "🛑 Avoid unnecessary purchases (accountability!)" }
+      ]
+    },
+    {
+      category: "Opportunities",
+      items: [
+        { text: "🚀 Apply for freelance gig (share progress)" },
+        { text: "💡 Pitch new app feature (get feedback)" },
+        { text: "🤝 Connect with mentor on LinkedIn (invite a friend)" },
+        { text: "📈 Explore passive income idea (brainstorm together)" }
+      ]
+    },
+    {
+      category: "App Builder’s Sandbox",
+      items: [
+        { text: "🛠 Prototype new feature (pair up!)" },
+        { text: "📱 Test list sync on two devices" },
+        { text: "🎨 Sketch UI improvements (collab mode)" },
+        { text: "🧩 Brainstorm integrations (Notion, Slack...)" }
+      ]
+    },
+    {
+      category: "Weekly Planning",
+      items: [
+        { text: "🗓 Review calendar for week (sync with team)" },
+        { text: "✅ Prioritize top 3 tasks per day (together)" },
+        { text: "📤 Share checklist with team (real-time updates)" },
+        { text: "📌 Reflect on wins & lessons (group share)" }
+      ]
+    }
+  ];
+
+// move to LiveList component. 
+  function seedDemo(category) {
+    const found = seedLists.find(l => l.category === category);
+    if (!found) return;
+    found.items.forEach(item => {setText(item.text); });
+  }
+
   return (
     <section aria-labelledby="list-heading" className="mx-auto max-w-2xl">
       <Card className="shadow-sm">
@@ -129,8 +196,20 @@ export const ListStage = ({
           
           <ul className="space-y-3">
             {items.length === 0 && (
-              <li className="text-muted-foreground text-sm">Your list is empty. Add your first item!</li>
+              <li className="text-muted-foreground text-sm flex flex-col gap-3 items-center">
+                <span className="mb-2">Your list is empty. Get a head start with a demo list:</span>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Button variant="outline" size="sm" onClick={() => seedDemo('Student Research')} className="min-w-[140px]">📚 Student Research</Button>
+                  <Button variant="outline" size="sm" onClick={() => seedDemo('Wellbeing & Energy')} className="min-w-[140px]">🧘 Wellbeing & Energy</Button>
+                  <Button variant="outline" size="sm" onClick={() => seedDemo('Money Watchlist')} className="min-w-[140px]">💳 Money Watchlist</Button>
+                  <Button variant="outline" size="sm" onClick={() => seedDemo('Opportunities')} className="min-w-[140px]">🚀 Opportunities</Button>
+                  <Button variant="outline" size="sm" onClick={() => seedDemo("App Builder’s Sandbox")} className="min-w-[140px]">🛠 App Builder’s Sandbox</Button>
+                  <Button variant="outline" size="sm" onClick={() => seedDemo('Weekly Planning')} className="min-w-[140px]">🗓 Weekly Planning</Button>
+                </div>
+                <span className="mt-2 text-xs text-muted-foreground">Try sharing a demo list with a friend to see live sync in action!</span>
+              </li>
             )}
+
             {items.map((item) => (
               <ListItemRow
                 key={item.id}
