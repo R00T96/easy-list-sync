@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Share, ArrowRight, QrCode, Loader2 } from 'lucide-react';
+import { Share, ArrowRight, QrCode, Loader2, Check } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import syncDemo from '@/assets/sync-demo.jpg';
 import { Link, useNavigate } from 'react-router-dom';
 import { usePin } from '@/hooks/usePin';
+import { useShare } from '@/hooks/useShare';
 import { FeedbackButton } from './FeedbackButton';
 import { toast } from "@/hooks/use-toast";
 
@@ -20,6 +21,7 @@ const normalizePin = (v: string) =>
 const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const { pin, savePin } = usePin();
+  const { share, isSharing, justShared } = useShare();
   const [urlPin, setUrlPin] = useState<string | null>(null);
   const [showQR, setShowQR] = useState(false);
   const [showShoppingList, setShowShoppingList] = useState(false);
@@ -110,20 +112,19 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
   };
 
   const handleShare = async () => {
+    if (!pin) return;
+    
     const shareUrl = getShareUrl();
-    const shareData = {
+    
+    await share({
       title: 'Join my list',
       text: `Join my shared list with code: ${pin}`,
       url: shareUrl,
-    };
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        console.log('Share cancelled');
+      successMessage: {
+        title: "🔗 Share link ready!",
+        description: "Send this link to others so they can join your list instantly.",
       }
-    }
+    });
   };
 
   const handleShowQR = () => {
@@ -302,10 +303,11 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
                   <Button
                     variant="default"
                     onClick={handleShare}
+                    disabled={isSharing}
                     className="flex-1"
                   >
-                    <Share className="mr-2 w-4 h-4" />
-                    Share
+                    {justShared ? <Check className="mr-2 w-4 h-4" /> : <Share className="mr-2 w-4 h-4" />}
+                    {justShared ? 'Shared!' : isSharing ? 'Sharing...' : 'Share'}
                   </Button>
                 </div>
               </div>
