@@ -63,6 +63,7 @@ const seedLists = [
             { text: "🎬 Movie night with friends" },
             { text: "🏃‍♂️ Go for a morning run" },
             { text: "🍳 Try a new brunch recipe" },
+            { text: "🎲 Board games or trivia with family" },
         ]
     }
 ];
