@@ -79,7 +79,7 @@ export const useDemoSeeds = ({ pin, setText, addItem, onBatchAdd }: UseDemoSeeds
 
     const seedDemo = useCallback(async (category: string) => {
         if (!pin) {
-            toast({ title: "Join Room", description: "Please join a room to add demo items." });
+            toast({ title: "Join List", description: "Please join a List to add demo items." });
             return;
         }
 
