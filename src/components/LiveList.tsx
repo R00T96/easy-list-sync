@@ -3,6 +3,7 @@ import { toast } from "@/hooks/use-toast";
 import { loadItems, saveItems, type ShoppingItem, type SyncStatus } from "@/store/shoppingList";
 import { createSupabaseWithHeaders, supabase } from "@/integrations/supabase/client";
 import { usePin } from "@/hooks/usePin";
+import { useDemoSeeds } from "@/hooks/useDemoSeeds";
 import { PinGateStage } from "@/components/PinGateStage";
 import { ListStage } from "@/components/ListStage";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -45,22 +46,16 @@ const LiveList = () => {
       const isValid = /^[A-Z0-9]{6}$/.test(candidate);
       if (!isValid) return;
 
-      // If already in a room and incoming is different, show PinGate for auto-join
+      // If already in a list and incoming is different, show PinGate for auto-join
       if (!pin || pin !== candidate) {
         console.log(`🔗 Switching to PIN from URL: ${candidate}`);
         setUrlPin(candidate);
       }
 
-      // Clean up URL after capturing it
-      //const newUrl = new URL(window.location.href);
-      //newUrl.searchParams.delete("pin");
-      //window.history.replaceState({}, document.title, newUrl.toString());
-
       console.log(`🔗 Detected PIN from URL: ${candidate}`);
     };
 
     processUrlParams();
-    // re-run when pin changes (e.g., to handle copy/paste navigation in SPA)
   }, [pin]);
 
   // Handler for PIN setting (from PinGate component)
@@ -76,6 +71,80 @@ const LiveList = () => {
     const desc = document.querySelector('meta[name="description"]');
     if (desc) desc.setAttribute("content", "Get 10+ brains on the same page in 10 seconds. No login, instant link share, works on any device.");
   }, [pin]);
+
+  // Centralized function to update items, refs, and persistence
+  const applyItems = (next: ShoppingItem[]) => {
+    itemsRef.current = next;  // Update ref first
+    setItems(next);           // Schedule state update
+    saveItems(next);          // Persist to storage
+  };
+
+  const addItem = () => {
+    if (!pin) {
+      toast({ title: "Join List", description: "Please join a list to add items." });
+      return;
+    }
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    const next: ShoppingItem = {
+      id: crypto.randomUUID(),
+      list_id: pin,
+      text: trimmed,
+      qty: Math.max(1, qty || 1),
+      done: false,
+      updated_at: new Date().toISOString(),
+      deleted: false,
+      syncStatus: PENDING,
+      client_id: clientId.current,
+    };
+    const updated = [next, ...itemsRef.current];
+    applyItems(updated);
+    setText("");
+    setQty(1);
+    
+    // Immediate sync for real-time experience
+    if (isOnline && !isSyncingRef.current) {
+      syncNow(updated);
+    }
+  };
+
+  // Batch add function for demo seeds (more efficient than adding one by one)
+  const batchAddItems = useCallback((itemTexts: string[]) => {
+    if (!pin) {
+      toast({ title: "Join List", description: "Please join a list to add demo items." });
+      return;
+    }
+
+    // Create multiple items at once
+    const newItems: ShoppingItem[] = itemTexts.map(itemText => ({
+      id: crypto.randomUUID(),
+      list_id: pin,
+      text: itemText,
+      qty: 1,
+      done: false,
+      updated_at: new Date().toISOString(),
+      deleted: false,
+      syncStatus: PENDING,
+      client_id: clientId.current,
+    }));
+
+    // Add all demo items to the beginning of the list
+    const updated = [...newItems, ...itemsRef.current];
+    applyItems(updated);
+    
+    // Immediate sync for real-time experience
+    if (isOnline && !isSyncingRef.current) {
+      syncNow(updated);
+    }
+  }, [pin, isOnline]);
+
+  // Initialize demo seeds hook
+  const { seedDemo, availableCategories } = useDemoSeeds({
+    pin,
+    setText,
+    addItem,
+    onBatchAdd: batchAddItems
+  });
 
   // Helper to merge a single server row into local state safely
   const upsertFromServer = useCallback((row: any) => {
@@ -267,42 +336,6 @@ const LiveList = () => {
   const allRoomItems = useMemo(() => pin ? items.filter(i => i.list_id === pin) : [], [items, pin]);
   const completedCount = useMemo(() => visibleItems.filter(i => i.done && !i.deleted).length, [visibleItems]);
 
-  // Centralized function to update items, refs, and persistence
-  const applyItems = (next: ShoppingItem[]) => {
-    itemsRef.current = next;  // Update ref first
-    setItems(next);           // Schedule state update
-    saveItems(next);          // Persist to storage
-  };
-
-  const addItem = () => {
-    if (!pin) {
-      toast({ title: "Join Room", description: "Please join a room to add items." });
-      return;
-    }
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    const next: ShoppingItem = {
-      id: crypto.randomUUID(),
-      list_id: pin,
-      text: trimmed,
-      qty: Math.max(1, qty || 1),
-      done: false,
-      updated_at: new Date().toISOString(),
-      deleted: false,
-      syncStatus: PENDING,
-      client_id: clientId.current,
-    };
-    const updated = [next, ...itemsRef.current];
-    applyItems(updated);
-    setText("");
-    setQty(1);
-    
-    // Immediate sync for real-time experience
-    if (isOnline && !isSyncingRef.current) {
-      syncNow(updated);
-    }
-  };
-
   const toggleDone = (id: string) => {
     const updated = itemsRef.current.map(i => i.id === id ? { ...i, done: !i.done, updated_at: new Date().toISOString(), syncStatus: PENDING } : i);
     applyItems(updated);
@@ -365,7 +398,7 @@ const LiveList = () => {
       return;
     }
     if (!pin) {
-      toast({ title: "Join Room", description: "Join a room to sync progress." });
+      toast({ title: "Join List", description: "Join a list to sync progress." });
       return;
     }
     if (isSyncingRef.current) return;
@@ -385,14 +418,14 @@ const LiveList = () => {
       console.log(`📱 Local items: ${local.length}, Pending: ${pending.length}`);
 
       // Push pending changes first
-    if (pending.length > 0) {
-      console.log(`📤 Pushing ${pending.length} pending items:`, pending.map(p => p.text));
-      const toPush = pending.map(({ syncStatus, ...rest }) => ({ ...rest, client_id: clientId.current }));
-      const { data: upsertData, error: upsertError } = await sb
-        .from("shopping_items")
-        .upsert(toPush, { onConflict: "id" })
-        .select();
-        
+      if (pending.length > 0) {
+        console.log(`📤 Pushing ${pending.length} pending items:`, pending.map(p => p.text));
+        const toPush = pending.map(({ syncStatus, ...rest }) => ({ ...rest, client_id: clientId.current }));
+        const { data: upsertData, error: upsertError } = await sb
+          .from("shopping_items")
+          .upsert(toPush, { onConflict: "id" })
+          .select();
+          
         if (upsertError) {
           console.error("❌ Upsert error:", upsertError);
           throw upsertError;
@@ -492,6 +525,7 @@ const LiveList = () => {
     toggleDone,
     clearCompleted,
     restoreItem,
+    seedDemo, // Hook provides this function
   };
 
   return (
@@ -511,6 +545,7 @@ const LiveList = () => {
             setText={setText}
             completedCount={completedCount}
             actions={actions}
+            availableCategories={availableCategories} // Pass categories from hook
           />
         )}
     </>
