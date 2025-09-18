@@ -23,7 +23,7 @@ interface ShoppingItem {
 }
 
 // Separate component that uses useSidebar
-const ShoppingListContent: React.FC = () => {
+const MyListContent: React.FC = () => {
   const [items, setItems] = useState<ShoppingItem[]>([
     { id: '1', name: 'Pizza dough flour', completed: false },
     { id: '2', name: 'Active dry yeast', completed: false },
@@ -84,7 +84,7 @@ const ShoppingListContent: React.FC = () => {
         </div>
       </header>
 
-      {/* Shopping List Content */}
+      {/* My List Content */}
       <div className="p-4 space-y-4">
         {/* Add new item */}
         <Card className="p-4 bg-card/50 border-border">
@@ -106,7 +106,7 @@ const ShoppingListContent: React.FC = () => {
           </div>
         </Card>
 
-        {/* Shopping Items */}
+        {/* My Items */}
         <div className="space-y-2">
           {items.map((item) => (
             <Card key={item.id} className="p-3 bg-card/30 border-border">
@@ -154,7 +154,7 @@ const ShoppingListContent: React.FC = () => {
   );
 };
 
-const ShoppingList: React.FC = () => {
+const MyList: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -227,10 +227,10 @@ const ShoppingList: React.FC = () => {
           </SidebarContent>
         </Sidebar>
 
-        <ShoppingListContent />
+        <MyListContent />
       </div>
     </SidebarProvider>
   );
 };
 
-export default ShoppingList;
+export default MyList;

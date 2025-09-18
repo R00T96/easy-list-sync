@@ -1,11 +1,16 @@
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Share, Check } from "lucide-react";
+import { Share, Check, Settings, Shield, Palette } from 'lucide-react';
 import { usePin } from "@/hooks/usePin";
+import { useShare } from "@/hooks/useShare";
 import { ThemeToggle } from "./ThemeToggle";
-import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type HeaderProps = {
   isOnline: boolean;
@@ -13,79 +18,22 @@ type HeaderProps = {
 
 export const Header = ({ isOnline }: HeaderProps) => {
   const { pin, clearPin } = usePin();
-  const [isSharing, setIsSharing] = useState(false);
-  const [justShared, setJustShared] = useState(false);
+  const { share, isSharing, justShared } = useShare();
 
   const handleShare = async () => {
     if (!pin) return;
     
-    setIsSharing(true);
     const shareUrl = `${window.location.origin}/?pin=${pin}`;
     
-    try {
-      // Try to use Clipboard API
-      if (navigator.clipboard && window.isSecureContext) {
-        const shareData = {
-          title: 'Join my list',
-          text: `Join my shared list with code: ${pin}`,
-          url: shareUrl,
-        };
-
-        if (navigator.share) {
-          try {
-            await navigator.share(shareData);
-            setJustShared(true);
-            setTimeout(() => setJustShared(false), 2000);
-            
-            // toast({
-            //   title: "🔗 Share link copied!",
-            //   description: "Send this link to others so they can join your list instantly.",
-            // });
-          } catch (err) {
-            console.log('Share cancelled');
-          }
-        }
-      } else {
-        // Fallback: Select text method
-        const textArea = document.createElement('textarea');
-        textArea.value = shareUrl;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        
-        try {
-          document.execCommand('copy');
-          setJustShared(true);
-          setTimeout(() => setJustShared(false), 2000);
-          
-          toast({
-            title: "🔗 Share link copied!",
-            description: "Send this link to others so they can join your list instantly.",
-          });
-        } catch (err) {
-          // Final fallback: Show the URL in toast
-          toast({
-            title: "Share this link:",
-            description: shareUrl,
-            duration: 10000,
-          });
-        } finally {
-          document.body.removeChild(textArea);
-        }
+    await share({
+      title: 'Join my list',
+      text: `Join my shared list with code: ${pin}`,
+      url: shareUrl,
+      successMessage: {
+        title: "🔗 Share link copied!",
+        description: "Send this link to others so they can join your list instantly.",
       }
-    } catch (err) {
-      toast({
-        title: "Couldn't copy link",
-        description: "Please copy this URL manually: " + shareUrl,
-        variant: "destructive",
-        duration: 10000,
-      });
-    } finally {
-      setIsSharing(false);
-    }
+    });
   };
 
   return (
@@ -109,21 +57,47 @@ export const Header = ({ isOnline }: HeaderProps) => {
           <Button variant="ghost" size="sm" onClick={clearPin} aria-label="Change List" title="Change List">
             Switch
           </Button>
-      </div>
+        </div>
       </>
-    )}
+      )}
       <div className="flex items-center gap-2">
-        <Badge variant={isOnline ? "default" : "secondary"}>
-          {isOnline ? "Live" : "Offline"}
-        </Badge>
-        <ThemeToggle />
-        {pin && (
-          <Link to="/privacy">
-            <Button variant="ghost" size="sm" className="text-xs">
-              Privacy
-            </Button>
-          </Link>
-        )}
+        {/* User Profile Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="relative cursor-pointer">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center border-2 border-primary/20 hover:bg-primary/20 transition-colors">
+                <div className="w-6 h-6 bg-primary/30 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-medium text-primary">U</span>
+                </div>
+              </div>
+              {/* Online status indicator */}
+              <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-background ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
+            <DropdownMenuItem className="flex items-center space-x-2 cursor-pointer" asChild>
+              <div>
+                <Palette className="w-4 h-4" />
+                <span>Theme</span>
+                <div className="ml-auto">
+                  <ThemeToggle />
+                </div>
+              </div>
+            </DropdownMenuItem>
+            {pin && (
+              <DropdownMenuItem className="flex items-center space-x-2 cursor-pointer" asChild>
+                <Link to="/privacy">
+                  <Shield className="w-4 h-4" />
+                  <span>Privacy</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem className="flex items-center space-x-2 cursor-pointer">
+              <Settings className="w-4 h-4" />
+              <span>Preferences</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
