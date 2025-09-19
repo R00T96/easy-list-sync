@@ -5,11 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 
+
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import { PinProvider } from "@/hooks/usePin";
 import Landing from "./pages/Landing";
+import Goals from "./pages/Goals";
 import { EventProvider } from "@/events/EventProvider";
 import { ClientIdProvider } from "@/context/ClientIdContext";
 
@@ -34,6 +36,7 @@ const App = () => (
                   <Route path="/" element={<Landing />} />
                   <Route path="/public" element={<Index />} />
                   <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/goals" element={<Goals />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
