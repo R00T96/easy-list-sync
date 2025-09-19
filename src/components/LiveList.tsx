@@ -419,7 +419,7 @@ const LiveList = () => {
       // Push pending changes first
       if (pending.length > 0) {
         console.log(`📤 Pushing ${pending.length} pending items:`, pending.map(p => p.text));
-  const toPush = pending.map(({ syncStatus, ...rest }) => ({ ...rest, client_id: clientId }));
+        const toPush = pending.map(({ syncStatus, ...rest }) => ({ ...rest, client_id: clientId }));
         const { data: upsertData, error: upsertError } = await sb
           .from("shopping_items")
           .upsert(toPush, { onConflict: "id" })

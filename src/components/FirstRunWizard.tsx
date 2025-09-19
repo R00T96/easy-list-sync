@@ -40,11 +40,14 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
         subtext: stepObj.subtext,
         cta: stepObj.cta,
         clientId,
+        pin,
+        urlPin,
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
       }
     });
   };
+
   const [currentStep, setCurrentStep] = useState(0);
   const { pin, savePin } = usePin();
   const { share, isSharing, justShared } = useShare();
@@ -53,7 +56,27 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
   const [showShoppingList, setShowShoppingList] = useState(false);
   const navigate = useNavigate();
   const [isAutoJoining, setIsAutoJoining] = useState(false);
+  const [pendingUrlPinEvent, setPendingUrlPinEvent] = useState(null);
 
+      // Emit event for detected PIN from URL as soon as urlPin and eventCtx are available
+    // Emit when eventCtx is ready
+    useEffect(() => {
+      if (!pendingUrlPinEvent || !eventCtx) return;
+      
+      eventCtx.emit({
+        type: "ShoppingList",
+        item: null,
+        meta: {
+          action: "pin-detected-from-url",
+          clientId,
+          pin,
+          ...pendingUrlPinEvent,
+        }
+      });
+      
+      setPendingUrlPinEvent(null); // Clear after emitting
+    }, [pendingUrlPinEvent, eventCtx, clientId, pin]);
+    
     // Auto-fill PIN from URL parameter and attempt auto-join
     useEffect(() => {
       if (!urlPin) return;
@@ -61,6 +84,13 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
       if (PIN_REGEX.test(candidate)) {
         savePin(candidate);
         handleAutoJoin(candidate);
+        console.log(`🔗 Auto-joining list with PIN from URL: ${candidate}`);
+        // Store the event data to emit later
+        setPendingUrlPinEvent({
+          urlPin: candidate,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+        });
       }
     }, [urlPin]);
 
@@ -114,11 +144,36 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
         //window.history.replaceState({}, document.title, newUrl.toString());
   
         console.log(`🔗 Detected PIN from URL: ${candidate}`);
+
+         // Store the event data to emit later
+        setPendingUrlPinEvent({
+          urlPin: candidate,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+        });
+        
+        // Emit event for detected PIN from URL for AI/analytics
+        // if (eventCtx) {
+        //   eventCtx.emit({
+        //     type: "ShoppingList",
+        //     item: null,
+        //     meta: {
+        //       action: "pin-detected-from-url",
+        //       clientId,
+        //       pin,
+        //       urlPin: candidate,
+        //       timestamp: new Date().toISOString(),
+        //       userAgent: navigator.userAgent,
+        //     }
+        //   });
+        // }
       };
   
       processUrlParams();
       // re-run when pin changes (e.g., to handle copy/paste navigation in SPA)
+
     }, [pin]);
+
 
   const generatePin = () => {
     const words = ['TRIP', 'LIST', 'SYNC', 'TEAM', 'SHOP', 'PLAN', 'WORK', 'HOME'];
