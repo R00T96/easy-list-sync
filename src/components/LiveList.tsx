@@ -78,6 +78,12 @@ const LiveList = () => {
         }
       });
     }
+
+    // Clean up URL after capturing it
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.delete("pin");
+    window.history.replaceState({}, document.title, newUrl.toString());
+
   }, [pin, eventCtx, clientId]);
 
   // Handler for PIN setting (from PinGate component)
@@ -130,6 +136,7 @@ const LiveList = () => {
     }
   };
 
+
   // Batch add function for demo seeds (more efficient than adding one by one)
   const batchAddItems = useCallback((itemTexts: string[]) => {
     if (!pin) {
@@ -167,6 +174,22 @@ const LiveList = () => {
     addItem,
     onBatchAdd: batchAddItems
   });
+
+    // On mount, check for seed items in localStorage for this PIN and batch add if found
+  useEffect(() => {
+    if (!pin) return;
+    const key = `seedItems_${pin}`;
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      try {
+        const items: string[] = JSON.parse(raw);
+        if (Array.isArray(items) && items.length > 0) {
+          batchAddItems(items);
+        }
+      } catch {}
+      localStorage.removeItem(key);
+    }
+  }, [pin, batchAddItems]);
 
   // Helper to merge a single server row into local state safely
   const upsertFromServer = useCallback((row: any) => {

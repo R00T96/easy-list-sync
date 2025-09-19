@@ -57,6 +57,12 @@ export const Header = ({ isOnline }: HeaderProps) => {
           <Button variant="ghost" size="sm" onClick={clearPin} aria-label="Change List" title="Change List">
             Switch
           </Button>
+          <Link to="/goals" aria-label="Goals" title="Go to Goals">
+            <Button variant="ghost" size="sm">
+              <span role="img" aria-label="Goals" className="mr-1">🎯</span>
+              Goals
+            </Button>
+          </Link>
         </div>
       </>
       )}
@@ -83,6 +89,12 @@ export const Header = ({ isOnline }: HeaderProps) => {
                   <ThemeToggle />
                 </div>
               </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="flex items-center space-x-2 cursor-pointer" asChild>
+              <Link to="/goals">
+                <span role="img" aria-label="Goals" className="w-4 h-4">🎯</span>
+                <span>Goals</span>
+              </Link>
             </DropdownMenuItem>
             {pin && (
               <DropdownMenuItem className="flex items-center space-x-2 cursor-pointer" asChild>

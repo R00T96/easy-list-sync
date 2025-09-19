@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 
 // Demo seed data
-const seedLists = [
+export const seedLists = [
     {
         category: "Student Research",
         items: [
