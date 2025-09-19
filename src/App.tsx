@@ -4,11 +4,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Privacy from "./pages/Privacy";
 import { PinProvider } from "@/hooks/usePin";
 import Landing from "./pages/Landing";
+import { EventProvider } from "@/events/EventProvider";
+import { ClientIdProvider } from "@/context/ClientIdContext";
 
 const queryClient = new QueryClient();
 
@@ -21,19 +24,23 @@ const App = () => (
       disableTransitionOnChange
     >
       <TooltipProvider>
-          <PinProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/public" element={<Index />} />
-              <Route path="/privacy" element={<Privacy />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </PinProvider>
+        <ClientIdProvider>
+          <EventProvider>
+            <PinProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/public" element={<Index />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </PinProvider>
+          </EventProvider>
+        </ClientIdProvider>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

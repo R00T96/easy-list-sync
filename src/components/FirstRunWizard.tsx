@@ -9,6 +9,10 @@ import { usePin } from '@/hooks/usePin';
 import { useShare } from '@/hooks/useShare';
 import { FeedbackButton } from './FeedbackButton';
 import { toast } from "@/hooks/use-toast";
+import { useContext } from "react";
+import { EventContext } from "@/events/EventContext";
+import type { AppEvent } from "@/events/eventTypes";
+import { useClientId } from "@/context/ClientIdContext";
 
 interface FirstRunWizardProps {
   onComplete?: () => void;
@@ -19,6 +23,31 @@ const normalizePin = (v: string) =>
   v.trim().toUpperCase(); // keep links/user input consistent
 
 const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
+  // Event context for emitting onboarding/AI events
+  const eventCtx = useContext(EventContext);
+  const { clientId, setClientId } = useClientId();
+
+  // Helper to emit onboarding events for AI/notifications
+  const emitOnboardingEvent = (stepIdx: number, stepObj: any) => {
+    if (!eventCtx) return;
+    eventCtx.emit({
+      type: "ShoppingList",
+      item: null,
+      meta: {
+        action: "onboarding-step",
+        step: stepIdx,
+        headline: stepObj.headline,
+        subtext: stepObj.subtext,
+        cta: stepObj.cta,
+        clientId,
+        pin,
+        urlPin,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+      }
+    });
+  };
+
   const [currentStep, setCurrentStep] = useState(0);
   const { pin, savePin } = usePin();
   const { share, isSharing, justShared } = useShare();
@@ -27,7 +56,27 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
   const [showShoppingList, setShowShoppingList] = useState(false);
   const navigate = useNavigate();
   const [isAutoJoining, setIsAutoJoining] = useState(false);
+  const [pendingUrlPinEvent, setPendingUrlPinEvent] = useState(null);
 
+      // Emit event for detected PIN from URL as soon as urlPin and eventCtx are available
+    // Emit when eventCtx is ready
+    useEffect(() => {
+      if (!pendingUrlPinEvent || !eventCtx) return;
+      
+      eventCtx.emit({
+        type: "ShoppingList",
+        item: null,
+        meta: {
+          action: "pin-detected-from-url",
+          clientId,
+          pin,
+          ...pendingUrlPinEvent,
+        }
+      });
+      
+      setPendingUrlPinEvent(null); // Clear after emitting
+    }, [pendingUrlPinEvent, eventCtx, clientId, pin]);
+    
     // Auto-fill PIN from URL parameter and attempt auto-join
     useEffect(() => {
       if (!urlPin) return;
@@ -35,6 +84,13 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
       if (PIN_REGEX.test(candidate)) {
         savePin(candidate);
         handleAutoJoin(candidate);
+        console.log(`🔗 Auto-joining list with PIN from URL: ${candidate}`);
+        // Store the event data to emit later
+        setPendingUrlPinEvent({
+          urlPin: candidate,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+        });
       }
     }, [urlPin]);
 
@@ -88,11 +144,36 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
         //window.history.replaceState({}, document.title, newUrl.toString());
   
         console.log(`🔗 Detected PIN from URL: ${candidate}`);
+
+         // Store the event data to emit later
+        setPendingUrlPinEvent({
+          urlPin: candidate,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+        });
+        
+        // Emit event for detected PIN from URL for AI/analytics
+        // if (eventCtx) {
+        //   eventCtx.emit({
+        //     type: "ShoppingList",
+        //     item: null,
+        //     meta: {
+        //       action: "pin-detected-from-url",
+        //       clientId,
+        //       pin,
+        //       urlPin: candidate,
+        //       timestamp: new Date().toISOString(),
+        //       userAgent: navigator.userAgent,
+        //     }
+        //   });
+        // }
       };
   
       processUrlParams();
       // re-run when pin changes (e.g., to handle copy/paste navigation in SPA)
+
     }, [pin]);
+
 
   const generatePin = () => {
     const words = ['TRIP', 'LIST', 'SYNC', 'TEAM', 'SHOP', 'PLAN', 'WORK', 'HOME'];
@@ -132,6 +213,8 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
   };
 
   const nextStep = () => {
+    // Emit onboarding event for this step
+    emitOnboardingEvent(currentStep, steps[currentStep]);
     if (currentStep < 3) {
       // TODO: till I figure out how to pull item count for the PIN to continue with next steps
       if (currentStep === 2 && pin) {
@@ -196,6 +279,8 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
   useEffect(() => {
     // PIN already set? Navigate directly
     if (showShoppingList || urlPin) {
+      // Emit onboarding completion event for AI/notifications
+      emitOnboardingEvent(999, { headline: "Onboarding Complete", subtext: "User finished onboarding; PIN already set. Navigating to /public directly", cta: null });
       navigate('/public');
     }
   }, [showShoppingList, navigate]);
