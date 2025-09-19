@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef, useContext } from "react";
+import { EventContext } from "@/events/EventContext";
 import { useClientId } from "@/context/ClientIdContext";
 import { toast } from "@/hooks/use-toast";
 import { loadItems, saveItems, type ShoppingItem, type SyncStatus } from "@/store/shoppingList";
@@ -25,6 +26,8 @@ const LiveList = () => {
 
   // Use clientId from context
   const { clientId } = useClientId();
+  // Event context for emitting AI/analytics events
+  const eventCtx = useContext(EventContext);
   
   // Refs for stable access to current state in callbacks
   const itemsRef = useRef<ShoppingItem[]>([]);
@@ -36,26 +39,46 @@ const LiveList = () => {
 
   // Process URL parameters on mount
   useEffect(() => {
-    const processUrlParams = () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const raw = urlParams.get("pin");
-      if (!raw) return;
-
-      const candidate = raw.trim().toUpperCase();
-      const isValid = /^[A-Z0-9]{6}$/.test(candidate);
-      if (!isValid) return;
-
-      // If already in a list and incoming is different, show PinGate for auto-join
-      if (!pin || pin !== candidate) {
-        console.log(`🔗 Switching to PIN from URL: ${candidate}`);
-        setUrlPin(candidate);
+    const urlParams = new URLSearchParams(window.location.search);
+    const raw = urlParams.get("pin");
+    if (!raw) return;
+    const candidate = raw.trim().toUpperCase();
+    const isValid = /^[A-Z0-9]{6}$/.test(candidate);
+    if (!isValid) return;
+    // If already in a list and incoming is different, show PinGate for auto-join
+    if (!pin || pin !== candidate) {
+      if (eventCtx) {
+        eventCtx.emit({
+          type: "ShoppingList",
+          item: null,
+          meta: {
+            action: "pin-switch",
+            clientId,
+            oldPin: pin,
+            newPin: candidate,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+          }
+        });
       }
-
-      console.log(`🔗 Detected PIN from URL: ${candidate}`);
-    };
-
-    processUrlParams();
-  }, [pin]);
+      setUrlPin(candidate);
+    }
+    // Emit event for detected PIN from URL
+    if (eventCtx) {
+      eventCtx.emit({
+        type: "ShoppingList",
+        item: null,
+        meta: {
+          action: "pin-detected-from-url",
+          clientId,
+          pin,
+          urlPin: candidate,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+        }
+      });
+    }
+  }, [pin, eventCtx, clientId]);
 
   // Handler for PIN setting (from PinGate component)
   const handlePinSet = (newPin: string) => {
@@ -151,7 +174,21 @@ const LiveList = () => {
     
     // Ignore self-echo events
   if (row.client_id === clientId) {
-      console.log('🔄 Ignoring self-echo event:', row.text);
+      if (eventCtx) {
+        eventCtx.emit({
+          type: "ShoppingList",
+          item: row,
+          meta: {
+            action: "ignore-self-echo",
+            clientId,
+            pin,
+            itemId: row.id,
+            text: row.text,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+          }
+        });
+      }
       return;
     }
 
@@ -189,11 +226,39 @@ const LiveList = () => {
     let next: ShoppingItem[];
     if (idx === -1) {
       next = [serverItem, ...local];
-      console.log('➕ Applied server INSERT:', serverItem.text);
+      if (eventCtx) {
+        eventCtx.emit({
+          type: "ShoppingList",
+          item: serverItem,
+          meta: {
+            action: "server-insert",
+            clientId,
+            pin,
+            itemId: serverItem.id,
+            text: serverItem.text,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+          }
+        });
+      }
     } else {
       next = [...local];
       next[idx] = { ...serverItem, syncStatus: "synced" };
-      console.log('🔄 Applied server UPDATE:', serverItem.text);
+      if (eventCtx) {
+        eventCtx.emit({
+          type: "ShoppingList",
+          item: serverItem,
+          meta: {
+            action: "server-update",
+            clientId,
+            pin,
+            itemId: serverItem.id,
+            text: serverItem.text,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+          }
+        });
+      }
     }
 
     applyItems(next);
@@ -210,7 +275,21 @@ const LiveList = () => {
     const next = [...local];
     next[idx] = { ...next[idx], deleted: true, syncStatus: "synced", updated_at: new Date().toISOString() };
     applyItems(next);
-    console.log('🗑️ Applied server DELETE:', row.text || row.id);
+    if (eventCtx) {
+      eventCtx.emit({
+        type: "ShoppingList",
+        item: row,
+        meta: {
+          action: "server-delete",
+          clientId,
+          pin,
+          itemId: row.id,
+          text: row.text,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+        }
+      });
+    }
   }, [pin]);
 
   // Setup realtime subscription with stable callbacks
@@ -405,7 +484,19 @@ const LiveList = () => {
     isSyncingRef.current = true;  // Set ref guard first
     setIsSyncing(true);
     
-    console.log(`🔄 Starting sync for PIN ${pin}...`);
+    if (eventCtx) {
+      eventCtx.emit({
+        type: "ShoppingList",
+        item: null,
+        meta: {
+          action: "sync-start",
+          clientId,
+          pin,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+        }
+      });
+    }
     
     try {
       const sb = createSupabaseWithHeaders({ "x-list-id": pin });
@@ -418,7 +509,21 @@ const LiveList = () => {
 
       // Push pending changes first
       if (pending.length > 0) {
-        console.log(`📤 Pushing ${pending.length} pending items:`, pending.map(p => p.text));
+        if (eventCtx) {
+          eventCtx.emit({
+            type: "ShoppingList",
+            item: null,
+            meta: {
+              action: "push-pending-items",
+              clientId,
+              pin,
+              pendingCount: pending.length,
+              pendingItems: pending.map(p => p.text),
+              timestamp: new Date().toISOString(),
+              userAgent: navigator.userAgent,
+            }
+          });
+        }
         const toPush = pending.map(({ syncStatus, ...rest }) => ({ ...rest, client_id: clientId }));
         const { data: upsertData, error: upsertError } = await sb
           .from("shopping_items")
@@ -429,7 +534,21 @@ const LiveList = () => {
           console.error("❌ Upsert error:", upsertError);
           throw upsertError;
         }
-        console.log(`✅ Successfully pushed items:`, upsertData);
+        if (eventCtx) {
+          eventCtx.emit({
+            type: "ShoppingList",
+            item: null,
+            meta: {
+              action: "push-success",
+              clientId,
+              pin,
+              upsertCount: upsertData?.length ?? 0,
+              upsertItems: upsertData?.map((d: any) => d.text),
+              timestamp: new Date().toISOString(),
+              userAgent: navigator.userAgent,
+            }
+          });
+        }
       }
 
       // Fetch server items filtered by list_id
@@ -443,7 +562,20 @@ const LiveList = () => {
         throw error;
       }
 
-      console.log(`📥 Server items: ${serverItems?.length || 0}`);
+      if (eventCtx) {
+        eventCtx.emit({
+          type: "ShoppingList",
+          item: null,
+          meta: {
+            action: "server-items-fetched",
+            clientId,
+            pin,
+            count: serverItems?.length || 0,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+          }
+        });
+      }
 
       // Start with local items (including just-pushed changes)
       const byId = new Map<string, ShoppingItem>();
@@ -479,17 +611,59 @@ const LiveList = () => {
           const localTime = new Date(localItem.updated_at).getTime();
           
           if (serverTime > localTime) {
-            console.log(`🔄 Server wins for item: ${serverItem.text}`);
+            if (eventCtx) {
+              eventCtx.emit({
+                type: "ShoppingList",
+                item: serverItem,
+                meta: {
+                  action: "server-wins-conflict",
+                  clientId,
+                  pin,
+                  itemId: serverItem.id,
+                  text: serverItem.text,
+                  timestamp: new Date().toISOString(),
+                  userAgent: navigator.userAgent,
+                }
+              });
+            }
             byId.set(serverItem.id, serverItem);
           } else if (localItem.syncStatus === PENDING) {
             // Local change is newer, push it
-            console.log(`📤 Pushing newer local change: ${localItem.text}`);
+            if (eventCtx) {
+              eventCtx.emit({
+                type: "ShoppingList",
+                item: localItem,
+                meta: {
+                  action: "push-newer-local-change",
+                  clientId,
+                  pin,
+                  itemId: localItem.id,
+                  text: localItem.text,
+                  timestamp: new Date().toISOString(),
+                  userAgent: navigator.userAgent,
+                }
+              });
+            }
             const { syncStatus, ...payload } = localItem as any;
             await sb.from("shopping_items").upsert([payload], { onConflict: "id" });
             byId.set(serverItem.id, { ...localItem, syncStatus: "synced" });
           }
         } else {
-          console.log(`✅ Keeping just-pushed item: ${localItem.text}`);
+          if (eventCtx) {
+            eventCtx.emit({
+              type: "ShoppingList",
+              item: localItem,
+              meta: {
+                action: "keep-just-pushed-item",
+                clientId,
+                pin,
+                itemId: localItem.id,
+                text: localItem.text,
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+              }
+            });
+          }
         }
       }
 
@@ -497,7 +671,20 @@ const LiveList = () => {
       const others = (snapshot ?? itemsRef.current).filter(i => i.list_id !== pin);
       const merged = [...mergedForPin, ...others];
       
-      console.log(`🔄 Final merged items for PIN ${pin}: ${mergedForPin.length}`);
+      if (eventCtx) {
+        eventCtx.emit({
+          type: "ShoppingList",
+          item: null,
+          meta: {
+            action: "final-merge",
+            clientId,
+            pin,
+            mergedCount: mergedForPin.length,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+          }
+        });
+      }
       
       // Commit merge to both ref and state synchronously
       itemsRef.current = merged;
@@ -515,7 +702,19 @@ const LiveList = () => {
   };
  
   useEffect(() => {
-    console.log("PIN changed in LiveList:", pin);
+    if (eventCtx) {
+      eventCtx.emit({
+        type: "ShoppingList",
+        item: null,
+        meta: {
+          action: "pin-changed",
+          clientId,
+          pin,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+        }
+      });
+    }
   }, [pin]);
 
   const actions = {
