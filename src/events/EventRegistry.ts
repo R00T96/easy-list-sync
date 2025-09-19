@@ -1,4 +1,5 @@
 // Registry for managing multiple event emitters (modular, DRY)
+
 import type { IEventEmitter } from "./IEventEmitter";
 import type { AppEvent } from "./eventTypes";
 
