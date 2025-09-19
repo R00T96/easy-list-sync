@@ -43,7 +43,7 @@ export class SeqEventEmitter implements IEventEmitter {
     };
 
 
-    console.log("SEQ Event:", seqEvent);
+    //console.log("SEQ Event:", seqEvent);
     fetch(`${this.seqUrl}/api/events/raw`, {
       method: "POST",
       headers: {
