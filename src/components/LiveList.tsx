@@ -173,7 +173,7 @@ const LiveList = () => {
     if (!row || row.list_id !== pin) return;
     
     // Ignore self-echo events
-  if (row.client_id === clientId) {
+    if (typeof row.client_id === "string" && row.client_id === clientId) {
       if (eventCtx) {
         eventCtx.emit({
           type: "ShoppingList",
