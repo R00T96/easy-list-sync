@@ -6,7 +6,7 @@ export type AppEventType = "ShoppingList";
 
 // Metadata shape for ShoppingList events (can be extended)
 export interface ShoppingListEventMeta {
-  action: "add" | "update" | "delete" | "clear-completed";
+  action: "add" | "update" | "delete" | "clear-completed" | "onboarding-step";
   userAgent?: string;
   [key: string]: any;
 }

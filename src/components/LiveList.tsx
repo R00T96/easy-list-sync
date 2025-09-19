@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useClientId } from "@/context/ClientIdContext";
 import { toast } from "@/hooks/use-toast";
 import { loadItems, saveItems, type ShoppingItem, type SyncStatus } from "@/store/shoppingList";
 import { createSupabaseWithHeaders, supabase } from "@/integrations/supabase/client";
@@ -21,11 +22,9 @@ const LiveList = () => {
   const realtimeChannel = useRef<RealtimeChannel | null>(null);
   const isHandlingRealtimeUpdate = useRef(false);
   
-  // Client ID for preventing self-echo
-  const clientId = useRef(localStorage.getItem("client-id") || crypto.randomUUID());
-  useEffect(() => { 
-    localStorage.setItem("client-id", clientId.current); 
-  }, []);
+
+  // Use clientId from context
+  const { clientId } = useClientId();
   
   // Refs for stable access to current state in callbacks
   const itemsRef = useRef<ShoppingItem[]>([]);
@@ -95,7 +94,7 @@ const LiveList = () => {
       updated_at: new Date().toISOString(),
       deleted: false,
       syncStatus: PENDING,
-      client_id: clientId.current,
+      client_id: clientId,
     };
     const updated = [next, ...itemsRef.current];
     applyItems(updated);
@@ -125,7 +124,7 @@ const LiveList = () => {
       updated_at: new Date().toISOString(),
       deleted: false,
       syncStatus: PENDING,
-      client_id: clientId.current,
+      client_id: clientId,
     }));
 
     // Add all demo items to the beginning of the list
@@ -151,7 +150,7 @@ const LiveList = () => {
     if (!row || row.list_id !== pin) return;
     
     // Ignore self-echo events
-    if (row.client_id === clientId.current) {
+  if (row.client_id === clientId) {
       console.log('🔄 Ignoring self-echo event:', row.text);
       return;
     }
@@ -420,7 +419,7 @@ const LiveList = () => {
       // Push pending changes first
       if (pending.length > 0) {
         console.log(`📤 Pushing ${pending.length} pending items:`, pending.map(p => p.text));
-        const toPush = pending.map(({ syncStatus, ...rest }) => ({ ...rest, client_id: clientId.current }));
+  const toPush = pending.map(({ syncStatus, ...rest }) => ({ ...rest, client_id: clientId }));
         const { data: upsertData, error: upsertError } = await sb
           .from("shopping_items")
           .upsert(toPush, { onConflict: "id" })

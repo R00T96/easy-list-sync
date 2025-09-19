@@ -9,6 +9,10 @@ import { usePin } from '@/hooks/usePin';
 import { useShare } from '@/hooks/useShare';
 import { FeedbackButton } from './FeedbackButton';
 import { toast } from "@/hooks/use-toast";
+import { useContext } from "react";
+import { EventContext } from "@/events/EventContext";
+import type { AppEvent } from "@/events/eventTypes";
+import { useClientId } from "@/context/ClientIdContext";
 
 interface FirstRunWizardProps {
   onComplete?: () => void;
@@ -19,6 +23,28 @@ const normalizePin = (v: string) =>
   v.trim().toUpperCase(); // keep links/user input consistent
 
 const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
+  // Event context for emitting onboarding/AI events
+  const eventCtx = useContext(EventContext);
+  const { clientId, setClientId } = useClientId();
+
+  // Helper to emit onboarding events for AI/notifications
+  const emitOnboardingEvent = (stepIdx: number, stepObj: any) => {
+    if (!eventCtx) return;
+    eventCtx.emit({
+      type: "ShoppingList",
+      item: null,
+      meta: {
+        action: "onboarding-step",
+        step: stepIdx,
+        headline: stepObj.headline,
+        subtext: stepObj.subtext,
+        cta: stepObj.cta,
+        clientId,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+      }
+    });
+  };
   const [currentStep, setCurrentStep] = useState(0);
   const { pin, savePin } = usePin();
   const { share, isSharing, justShared } = useShare();
@@ -132,6 +158,8 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
   };
 
   const nextStep = () => {
+    // Emit onboarding event for this step
+    emitOnboardingEvent(currentStep, steps[currentStep]);
     if (currentStep < 3) {
       // TODO: till I figure out how to pull item count for the PIN to continue with next steps
       if (currentStep === 2 && pin) {
@@ -196,6 +224,8 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
   useEffect(() => {
     // PIN already set? Navigate directly
     if (showShoppingList || urlPin) {
+      // Emit onboarding completion event for AI/notifications
+      emitOnboardingEvent(999, { headline: "Onboarding Complete", subtext: "User finished onboarding; PIN already set. Navigating to /public directly", cta: null });
       navigate('/public');
     }
   }, [showShoppingList, navigate]);
