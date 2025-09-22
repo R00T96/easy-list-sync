@@ -16,6 +16,7 @@ export interface ShoppingListEvent {
   type: "ShoppingList";
   item: ShoppingItem | null; // null for bulk/clear events
   meta: ShoppingListEventMeta;
+  topic?: string; // Optional: override topic for event emitters
 }
 
 // Union for all app events (extend as needed)
