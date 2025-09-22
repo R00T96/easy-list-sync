@@ -44,7 +44,8 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
         urlPin,
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
-      }
+      },
+      topic: `system/onboarding`
     });
   };
 
@@ -71,7 +72,8 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
           clientId,
           pin,
           ...pendingUrlPinEvent,
-        }
+        },
+        topic: `user/${clientId}/notification`
       });
       
       setPendingUrlPinEvent(null); // Clear after emitting

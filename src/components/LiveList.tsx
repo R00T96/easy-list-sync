@@ -58,7 +58,8 @@ const LiveList = () => {
             newPin: candidate,
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
-          }
+          },
+          topic: `user/${clientId}/notification`
         });
       }
       setUrlPin(candidate);
@@ -75,7 +76,8 @@ const LiveList = () => {
           urlPin: candidate,
           timestamp: new Date().toISOString(),
           userAgent: navigator.userAgent,
-        }
+        },
+        topic: `user/${clientId}/notification`
       });
     }
 
@@ -209,7 +211,8 @@ const LiveList = () => {
             text: row.text,
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
-          }
+          },
+          topic: `user/${clientId}/self-echo`
         });
       }
       return;
@@ -261,7 +264,8 @@ const LiveList = () => {
             text: serverItem.text,
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
-          }
+          },
+          topic: `system/list/${pin}`
         });
       }
     } else {
@@ -279,7 +283,8 @@ const LiveList = () => {
             text: serverItem.text,
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
-          }
+          },
+          topic: `system/list/${pin}`
         });
       }
     }
@@ -310,7 +315,8 @@ const LiveList = () => {
           text: row.text,
           timestamp: new Date().toISOString(),
           userAgent: navigator.userAgent,
-        }
+        },
+        topic: `system/list/${pin}`
       });
     }
   }, [pin]);
@@ -508,17 +514,18 @@ const LiveList = () => {
     setIsSyncing(true);
     
     if (eventCtx) {
-      eventCtx.emit({
-        type: "ShoppingList",
-        item: null,
-        meta: {
-          action: "sync-start",
-          clientId,
-          pin,
-          timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent,
-        }
-      });
+        eventCtx.emit({
+          type: "ShoppingList",
+          item: null,
+          meta: {
+            action: "sync-start",
+            clientId,
+            pin,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+          },
+          topic: `user/${clientId}/action`
+        });
     }
     
     try {
@@ -544,7 +551,8 @@ const LiveList = () => {
               pendingItems: pending.map(p => p.text),
               timestamp: new Date().toISOString(),
               userAgent: navigator.userAgent,
-            }
+            },
+            topic: `user/${clientId}/action`
           });
         }
         const toPush = pending.map(({ syncStatus, ...rest }) => ({ ...rest, client_id: clientId }));
@@ -569,7 +577,8 @@ const LiveList = () => {
               upsertItems: upsertData?.map((d: any) => d.text),
               timestamp: new Date().toISOString(),
               userAgent: navigator.userAgent,
-            }
+            },
+            topic: `user/${clientId}/action`
           });
         }
       }
@@ -596,7 +605,8 @@ const LiveList = () => {
             count: serverItems?.length || 0,
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
-          }
+          },
+          topic: `system/list/${pin}`
         });
       }
 
@@ -646,7 +656,8 @@ const LiveList = () => {
                   text: serverItem.text,
                   timestamp: new Date().toISOString(),
                   userAgent: navigator.userAgent,
-                }
+                },
+                topic: `system/list/${pin}`
               });
             }
             byId.set(serverItem.id, serverItem);
@@ -664,7 +675,8 @@ const LiveList = () => {
                   text: localItem.text,
                   timestamp: new Date().toISOString(),
                   userAgent: navigator.userAgent,
-                }
+                },
+                topic: `user/${clientId}/action`
               });
             }
             const { syncStatus, ...payload } = localItem as any;
@@ -684,7 +696,8 @@ const LiveList = () => {
                 text: localItem.text,
                 timestamp: new Date().toISOString(),
                 userAgent: navigator.userAgent,
-              }
+              },
+              topic: `user/${clientId}/action`
             });
           }
         }
@@ -705,7 +718,8 @@ const LiveList = () => {
             mergedCount: mergedForPin.length,
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
-          }
+          },
+          topic: `system/list/${pin}`
         });
       }
       
@@ -735,7 +749,8 @@ const LiveList = () => {
           pin,
           timestamp: new Date().toISOString(),
           userAgent: navigator.userAgent,
-        }
+        },
+        topic: `user/${clientId}/notification`
       });
     }
   }, [pin]);
