@@ -45,7 +45,17 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
       },
-      topic: `system/onboarding`
+      topic: `system/onboarding`,
+      context: {
+        timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+        locale: navigator.language,
+        device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+      },
+      notification: {
+        type: "onboarding",
+        contentId: `onboarding-step-${stepIdx}`,
+        urgency: stepIdx === 0 ? "info" : stepIdx === 3 ? "action" : "normal"
+      }
     });
   };
 

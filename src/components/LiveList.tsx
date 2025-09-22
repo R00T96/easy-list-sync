@@ -59,7 +59,16 @@ const LiveList = () => {
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
           },
-          topic: `user/${clientId}/notification`
+          topic: `user/${clientId}/notification`,
+          context: {
+            timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+            locale: navigator.language,
+            device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+          },
+          notification: {
+            type: "pin-switch",
+            urgency: "info"
+          }
         });
       }
       setUrlPin(candidate);
@@ -77,7 +86,16 @@ const LiveList = () => {
           timestamp: new Date().toISOString(),
           userAgent: navigator.userAgent,
         },
-        topic: `user/${clientId}/notification`
+        topic: `user/${clientId}/notification`,
+        context: {
+          timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+          locale: navigator.language,
+          device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+        },
+        notification: {
+          type: "pin-detected",
+          urgency: "info"
+        }
       });
     }
 
@@ -212,7 +230,16 @@ const LiveList = () => {
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
           },
-          topic: `user/${clientId}/self-echo`
+          topic: `user/${clientId}/self-echo`,
+          context: {
+            timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+            locale: navigator.language,
+            device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+          },
+          notification: {
+            type: "self-echo",
+            urgency: "low"
+          }
         });
       }
       return;
@@ -265,7 +292,16 @@ const LiveList = () => {
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
           },
-          topic: `system/list/${pin}`
+          topic: `system/list/${pin}`,
+          context: {
+            timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+            locale: navigator.language,
+            device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+          },
+          notification: {
+            type: "server-insert",
+            urgency: "info"
+          }
         });
       }
     } else {
@@ -284,7 +320,16 @@ const LiveList = () => {
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
           },
-          topic: `system/list/${pin}`
+          topic: `system/list/${pin}`,
+          context: {
+            timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+            locale: navigator.language,
+            device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+          },
+          notification: {
+            type: "server-update",
+            urgency: "info"
+          }
         });
       }
     }
@@ -316,7 +361,16 @@ const LiveList = () => {
           timestamp: new Date().toISOString(),
           userAgent: navigator.userAgent,
         },
-        topic: `system/list/${pin}`
+        topic: `system/list/${pin}`,
+        context: {
+          timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+          locale: navigator.language,
+          device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+        },
+        notification: {
+          type: "server-delete",
+          urgency: "info"
+        }
       });
     }
   }, [pin]);
@@ -514,18 +568,27 @@ const LiveList = () => {
     setIsSyncing(true);
     
     if (eventCtx) {
-        eventCtx.emit({
-          type: "ShoppingList",
-          item: null,
-          meta: {
-            action: "sync-start",
-            clientId,
-            pin,
-            timestamp: new Date().toISOString(),
-            userAgent: navigator.userAgent,
-          },
-          topic: `user/${clientId}/action`
-        });
+      eventCtx.emit({
+        type: "ShoppingList",
+        item: null,
+        meta: {
+          action: "sync-start",
+          clientId,
+          pin,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+        },
+        topic: `user/${clientId}/action`,
+        context: {
+          timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+          locale: navigator.language,
+          device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+        },
+        notification: {
+          type: "sync-start",
+          urgency: "info"
+        }
+      });
     }
     
     try {
@@ -552,7 +615,16 @@ const LiveList = () => {
               timestamp: new Date().toISOString(),
               userAgent: navigator.userAgent,
             },
-            topic: `user/${clientId}/action`
+            topic: `user/${clientId}/action`,
+            context: {
+              timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+              locale: navigator.language,
+              device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+            },
+            notification: {
+              type: "push-pending-items",
+              urgency: "info"
+            }
           });
         }
         const toPush = pending.map(({ syncStatus, ...rest }) => ({ ...rest, client_id: clientId }));
@@ -578,7 +650,16 @@ const LiveList = () => {
               timestamp: new Date().toISOString(),
               userAgent: navigator.userAgent,
             },
-            topic: `user/${clientId}/action`
+            topic: `user/${clientId}/action`,
+            context: {
+              timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+              locale: navigator.language,
+              device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+            },
+            notification: {
+              type: "push-success",
+              urgency: "info"
+            }
           });
         }
       }
@@ -606,7 +687,16 @@ const LiveList = () => {
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
           },
-          topic: `system/list/${pin}`
+          topic: `system/list/${pin}`,
+          context: {
+            timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+            locale: navigator.language,
+            device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+          },
+          notification: {
+            type: "server-items-fetched",
+            urgency: "info"
+          }
         });
       }
 
@@ -657,7 +747,16 @@ const LiveList = () => {
                   timestamp: new Date().toISOString(),
                   userAgent: navigator.userAgent,
                 },
-                topic: `system/list/${pin}`
+                topic: `system/list/${pin}`,
+                context: {
+                  timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+                  locale: navigator.language,
+                  device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+                },
+                notification: {
+                  type: "server-wins-conflict",
+                  urgency: "info"
+                }
               });
             }
             byId.set(serverItem.id, serverItem);
@@ -676,7 +775,16 @@ const LiveList = () => {
                   timestamp: new Date().toISOString(),
                   userAgent: navigator.userAgent,
                 },
-                topic: `user/${clientId}/action`
+                topic: `user/${clientId}/action`,
+                context: {
+                  timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+                  locale: navigator.language,
+                  device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+                },
+                notification: {
+                  type: "push-newer-local-change",
+                  urgency: "info"
+                }
               });
             }
             const { syncStatus, ...payload } = localItem as any;
@@ -697,7 +805,16 @@ const LiveList = () => {
                 timestamp: new Date().toISOString(),
                 userAgent: navigator.userAgent,
               },
-              topic: `user/${clientId}/action`
+              topic: `user/${clientId}/action`,
+              context: {
+                timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+                locale: navigator.language,
+                device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+              },
+              notification: {
+                type: "keep-just-pushed-item",
+                urgency: "info"
+              }
             });
           }
         }
@@ -719,7 +836,16 @@ const LiveList = () => {
             timestamp: new Date().toISOString(),
             userAgent: navigator.userAgent,
           },
-          topic: `system/list/${pin}`
+          topic: `system/list/${pin}`,
+          context: {
+            timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+            locale: navigator.language,
+            device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+          },
+          notification: {
+            type: "final-merge",
+            urgency: "info"
+          }
         });
       }
       
@@ -750,7 +876,16 @@ const LiveList = () => {
           timestamp: new Date().toISOString(),
           userAgent: navigator.userAgent,
         },
-        topic: `user/${clientId}/notification`
+        topic: `user/${clientId}/notification`,
+        context: {
+          timeBucket: new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening",
+          locale: navigator.language,
+          device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop"
+        },
+        notification: {
+          type: "pin-changed",
+          urgency: "info"
+        }
       });
     }
   }, [pin]);

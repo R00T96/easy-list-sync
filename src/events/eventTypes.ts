@@ -17,6 +17,30 @@ export interface ShoppingListEvent {
   item: ShoppingItem | null; // null for bulk/clear events
   meta: ShoppingListEventMeta;
   topic?: string; // Optional: override topic for event emitters
+  // Optional rich context for POMDP/belief updates (non-breaking)
+  context?: {
+    screenOn?: boolean;
+    appFg?: boolean;
+    ringer?: string;
+    motion?: string;
+    location?: string;
+    timeBucket?: string;
+    [key: string]: any;
+  };
+  notification?: {
+    type?: string;
+    urgency?: string;
+    contentId?: string;
+    batchId?: string;
+    [key: string]: any;
+  };
+  outcome?: {
+    clicked?: boolean;
+    dismissed?: boolean;
+    snoozed?: boolean;
+    timeToAction?: number;
+    [key: string]: any;
+  };
 }
 
 // Union for all app events (extend as needed)
