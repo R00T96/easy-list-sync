@@ -6,11 +6,12 @@ import mqtt, { MqttClient, IClientOptions } from "mqtt";
 export class MqttEventEmitter implements IEventEmitter {
   private client: MqttClient;
   private topic: string;
+  private defaultTopic: string;
   private isConnected: boolean = false;
 
   // use: https://testclient-cloud.mqtt.cool/ for testing subscriptions
   constructor(brokerUrl: string, topic: string = "easy-list-sync/events", options?: IClientOptions) {
-    this.topic = topic;
+  this.defaultTopic = topic;
     this.client = mqtt.connect(brokerUrl, options);
     this.client.on("connect", () => {
       this.isConnected = true;
@@ -28,8 +29,9 @@ export class MqttEventEmitter implements IEventEmitter {
 
   emit(event: AppEvent): void {
     if (!this.isConnected) return;
+    const topic = event.topic || this.defaultTopic;
     try {
-      this.client.publish(this.topic, JSON.stringify(event), { qos: 0 });
+      this.client.publish(topic, JSON.stringify(event), { qos: 0 });
       console.log("MQTT Event published", event);
     } catch (err) {
       // Optionally log or handle errors

@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { toast } from "@/hooks/use-toast";
 
 // Demo seed data
-const seedLists = [
+export const seedLists = [
     {
         category: "Student Research",
         items: [
@@ -64,6 +64,20 @@ const seedLists = [
             { text: "🏃‍♂️ Go for a morning run" },
             { text: "🍳 Try a new brunch recipe" },
             { text: "🎲 Board games or trivia with family" },
+        ]
+    },
+    // 72H Fast Protocol Blueprint
+    {
+        category: "72H Fast",
+        items: [
+            { text: "🌀 Declare fast & set intention (PIN)" },
+            { text: "⏰ Hourly body check-in: hunger, mood, energy" },
+            { text: "💧 Drink water (track intake)" },
+            { text: "🛑 Block notifications & social distractions" },
+            { text: "📝 Log hunger pangs vs. willpower moments" },
+            { text: "🌙 Nightly merge: sleep & reset" },
+            { text: "🔍 Inversion: What could break the fast? (log triggers)" },
+            { text: "✅ Celebrate each 24H milestone" }
         ]
     }
 ];

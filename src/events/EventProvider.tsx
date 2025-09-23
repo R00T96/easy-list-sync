@@ -13,9 +13,9 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
 
   // Register default emitters (console, SEQ, MQTT)
-  eventRegistry.register(new ConsoleEventEmitter());
-  eventRegistry.register(new SeqEventEmitter("http://localhost:5341"));
-  eventRegistry.register(new MqttEventEmitter("ws://broker.emqx.io:8083/mqtt", "easy-list-sync/events"));
+  // eventRegistry.register(new ConsoleEventEmitter());
+  // eventRegistry.register(new SeqEventEmitter("http://localhost:5341"));
+  // eventRegistry.register(new MqttEventEmitter("ws://broker.emqx.io:8083/mqtt", "easy-list-sync/events"));
 
     return () => {
       // Optionally unregister on unmount (not strictly needed for singleton)

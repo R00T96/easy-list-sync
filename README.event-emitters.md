@@ -54,3 +54,31 @@ eventRegistry.emit(event);
 ---
 
 For questions or to extend the event system, see the code in `src/events/`.
+
+---
+
+# Updates
+## [2025-09-22] Event Topic Routing Upgrade
+
+**Story:**
+Previously, all events were published to a single MQTT topic, making it difficult to distinguish between system and user events. This limited observability, security, and future scalability.
+
+**Pros:**
+- Enables granular routing of events to system/* and user/{clientId}/* topics
+- Backward compatible—existing consumers keep working
+- Improves monitoring, filtering, and access control
+- Lays groundwork for multi-tenant and enterprise scenarios
+
+**Pain:**
+Single-topic publishing created confusion, increased noise, and made it hard to secure or analyze event streams by type or user.
+
+**Mechanism:**
+Added an optional `topic` property to events. The MQTT emitter now uses `event.topic` if present, otherwise falls back to the default topic. No breaking changes—existing code continues to work.
+
+**Gain:**
+You can now emit system events to `system/heartbeat`, `system/maintenance`, etc., and user events to `user/{clientId}/action`, `user/{clientId}/notification`, etc. This brings clarity, security, and flexibility to your event architecture.
+
+**Consequences:**
+1st degree: Events are routed to specific topics, making filtering and monitoring easier.
+2nd degree: Consumers can subscribe only to relevant topics, reducing noise and risk.
+3rd degree: The system is future-proofed for advanced use cases, integrations, and compliance.
