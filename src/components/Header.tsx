@@ -57,12 +57,6 @@ export const Header = ({ isOnline }: HeaderProps) => {
           <Button variant="ghost" size="sm" onClick={clearPin} aria-label="Change List" title="Change List">
             Switch
           </Button>
-          <Link to="/goals" aria-label="Goals" title="Go to Goals">
-            <Button variant="ghost" size="sm">
-              <span role="img" aria-label="Goals" className="mr-1">🎯</span>
-              Goals
-            </Button>
-          </Link>
         </div>
       </>
       )}
