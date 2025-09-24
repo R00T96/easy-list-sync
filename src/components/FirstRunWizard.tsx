@@ -348,15 +348,41 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
                   {steps[0].subtext}
                 </p>
               </div>
-              <Button
-                variant="default"
-                size="lg"
-                onClick={nextStep}
-                className="w-full"
-              >
-                {steps[0].cta}
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
+              
+              {pin ? (
+                // When PIN exists - show both Continue and Skip options
+                <div className="space-y-3">
+                  <Button
+                    variant="default"
+                    size="lg"
+                    onClick={nextStep}
+                    className="w-full"
+                  >
+                    {steps[0].cta}
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    onClick={() => setShowShoppingList(true)}
+                    className="w-full"
+                  >
+                    Skip to List
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                // When no PIN - show only Start a List button
+                <Button
+                  variant="default"
+                  size="lg"
+                  onClick={nextStep}
+                  className="w-full"
+                >
+                  {steps[0].cta}
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              )}
             </div>
           )}
 
@@ -409,7 +435,30 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
                 </div>
               </div>
 
-              <Button
+              {pin ? (
+                // When PIN exists - show both Continue and Skip options
+                <div className="space-y-3">
+                  <Button
+                    variant="ghost"
+                    onClick={nextStep}
+                    className="w-full text-muted-foreground hover:text-foreground"
+                  >
+                    Continue
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    onClick={() => setShowShoppingList(true)}
+                    className="w-full"
+                  >
+                    Skip to List
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                // When no PIN - show only continue
+                <Button
                 variant="ghost"
                 onClick={nextStep}
                 className="w-full text-muted-foreground hover:text-foreground"
@@ -417,6 +466,7 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
                 Continue
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
+              )}
             </div>
           )}
 
