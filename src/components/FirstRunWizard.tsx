@@ -490,11 +490,6 @@ const FirstRunWizard: React.FC<FirstRunWizardProps> = ({ onComplete }) => {
         {/* Footer */}
         <div className="text-center mt-6 text-sm text-muted-foreground">
           <FeedbackButton />
-          <Link to="/privacy">
-            <Button variant="ghost" size="sm" className="text-xs">
-              Privacy
-            </Button>
-          </Link>
         </div>
       </div>
     </div>
