@@ -1,9 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Share, Check, Settings, Shield, Palette } from 'lucide-react';
+import { Share, Check, Settings, Shield, Moon, Sun, Monitor } from 'lucide-react';
 import { usePin } from "@/hooks/usePin";
 import { useShare } from "@/hooks/useShare";
-import { ThemeToggle } from "./ThemeToggle";
+import { useTheme } from "next-themes";
 import { Link } from "react-router-dom";
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ type HeaderProps = {
 export const Header = ({ isOnline }: HeaderProps) => {
   const { pin, clearPin } = usePin();
   const { share, isSharing, justShared } = useShare();
+  const { theme, setTheme } = useTheme();
 
   const handleShare = async () => {
     if (!pin) return;
@@ -74,15 +75,30 @@ export const Header = ({ isOnline }: HeaderProps) => {
               <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-background ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></div>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
-            <DropdownMenuItem className="flex items-center space-x-2 cursor-pointer" asChild>
-              <div>
-                <Palette className="w-4 h-4" />
-                <span>Theme</span>
-                <div className="ml-auto">
-                  <ThemeToggle />
-                </div>
-              </div>
+          <DropdownMenuContent align="end" className="w-48 bg-background border border-border z-50">
+            <DropdownMenuItem 
+              className="flex items-center space-x-2 cursor-pointer" 
+              onClick={() => setTheme("light")}
+            >
+              <Sun className="w-4 h-4" />
+              <span>Light Theme</span>
+              {theme === "light" && <Check className="w-4 h-4 ml-auto" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="flex items-center space-x-2 cursor-pointer" 
+              onClick={() => setTheme("dark")}
+            >
+              <Moon className="w-4 h-4" />
+              <span>Dark Theme</span>
+              {theme === "dark" && <Check className="w-4 h-4 ml-auto" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="flex items-center space-x-2 cursor-pointer" 
+              onClick={() => setTheme("system")}
+            >
+              <Monitor className="w-4 h-4" />
+              <span>System Theme</span>
+              {theme === "system" && <Check className="w-4 h-4 ml-auto" />}
             </DropdownMenuItem>
             <DropdownMenuItem className="flex items-center space-x-2 cursor-pointer" asChild>
               <Link to="/goals">
