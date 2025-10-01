@@ -553,6 +553,23 @@ const LiveList = () => {
     }
   };
 
+  const updateText = (id: string, newText: string) => {
+    const updated = itemsRef.current.map(i => 
+      i.id === id ? { 
+        ...i, 
+        text: newText, 
+        updated_at: new Date().toISOString(), 
+        syncStatus: PENDING 
+      } : i
+    );
+    applyItems(updated);
+    
+    // Immediate sync for real-time experience
+    if (isOnline && !isSyncingRef.current) {
+      syncNow(updated);
+    }
+  };
+
   const syncNow = async (snapshot?: ShoppingItem[]) => {
     if (!isOnline) {
       toast({ title: "Working offline", description: "Your changes are saved — they'll sync when you're back online." });
@@ -896,6 +913,7 @@ const LiveList = () => {
     toggleDone,
     clearCompleted,
     restoreItem,
+    updateText,
     seedDemo, // Hook provides this function
   };
 

@@ -4,7 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, History, Heart } from "lucide-react";
 import { ListItemRow } from "./ListItemRow";
+import { ListSettingsDialog } from "./ListSettingsDialog";
 import { usePin } from "@/hooks/usePin";
+import { usePinPreferences } from "@/hooks/usePinPreferences";
 import type { ShoppingItem } from "@/store/shoppingList";
 import { FeedbackButton } from './FeedbackButton';
 
@@ -14,6 +16,7 @@ type ListActions = {
   toggleDone: (id: string) => void;
   clearCompleted: () => void;
   restoreItem: (id: string) => void;
+  updateText: (id: string, newText: string) => void;
   seedDemo: (category: string) => void;
 };
 
@@ -49,6 +52,7 @@ export const ListStage = ({
   availableCategories
 }: ListStageProps) => {
   const { pin } = usePin();
+  const { listType } = usePinPreferences();
   const inputRef = useRef<HTMLInputElement>(null);
   
   const placeholderOptions = [
@@ -227,15 +231,18 @@ export const ListStage = ({
           </div>
           {items.length > 0 && (
               <div className="flex items-center justify-between mb-4">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowAllItems(!showAllItems)}
-                  className="text-sm"
-                >
-                  <History className="mr-2 h-4 w-4" />
-                  {showAllItems ? "Show Active Only" : "View All Items"}
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowAllItems(!showAllItems)}
+                    className="text-sm"
+                  >
+                    <History className="mr-2 h-4 w-4" />
+                    {showAllItems ? "Show Active Only" : "View All Items"}
+                  </Button>
+                  <ListSettingsDialog />
+                </div>
                 {showAllItems && (
                   <p className="text-xs text-muted-foreground">
                     Showing {allItems.length} total items
@@ -273,6 +280,8 @@ export const ListStage = ({
                 onToggleDone={actions.toggleDone}
                 onUpdateQty={actions.updateQty}
                 onRestore={actions.restoreItem}
+                onUpdateText={actions.updateText}
+                showQuantity={listType === 'shopping'}
               />
             ))}
           </ul>
