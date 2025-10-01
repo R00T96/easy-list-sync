@@ -14,9 +14,20 @@ type ListItemRowProps = {
   showQuantity?: boolean;
 };
 
+
 const isUrl = (text: string) => {
   try {
-    new URL(text);
+    const url = new URL(text);
+    // Only allow http and https protocols
+    if (!/^https?:$/.test(url.protocol)) {
+      return false;
+    }
+    // Block suspicious patterns that could be phishing or malicious
+    const hostname = url.hostname.toLowerCase();
+    // Block URLs with @ symbol (often used in phishing)
+    if (text.includes('@') && text.indexOf('@') < text.indexOf(hostname)) {
+      return false;
+    }
     return true;
   } catch {
     return false;
