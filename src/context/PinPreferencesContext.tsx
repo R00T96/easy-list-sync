@@ -1,10 +1,18 @@
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { createSupabaseWithHeaders } from '@/integrations/supabase/client';
-import { usePin } from './usePin';
+import { usePin } from '@/hooks/usePin';
 
 export type ListType = 'shopping' | 'todo';
 
-export const usePinPreferences = () => {
+type PinPreferencesContextType = {
+  listType: ListType;
+  updateListType: (newType: ListType) => Promise<void>;
+  isLoading: boolean;
+};
+
+const PinPreferencesContext = createContext<PinPreferencesContextType | undefined>(undefined);
+
+export const PinPreferencesProvider = ({ children }: { children: ReactNode }) => {
   const { pin } = usePin();
   const [listType, setListType] = useState<ListType>('shopping');
   const [isLoading, setIsLoading] = useState(false);
@@ -47,5 +55,17 @@ export const usePinPreferences = () => {
     setIsLoading(false);
   };
 
-  return { listType, updateListType, isLoading };
+  return (
+    <PinPreferencesContext.Provider value={{ listType, updateListType, isLoading }}>
+      {children}
+    </PinPreferencesContext.Provider>
+  );
+};
+
+export const usePinPreferences = () => {
+  const context = useContext(PinPreferencesContext);
+  if (context === undefined) {
+    throw new Error('usePinPreferences must be used within a PinPreferencesProvider');
+  }
+  return context;
 };

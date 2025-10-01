@@ -14,6 +14,7 @@ import Landing from "./pages/Landing";
 import Goals from "./pages/Goals";
 import { EventProvider } from "@/events/EventProvider";
 import { ClientIdProvider } from "@/context/ClientIdContext";
+import { PinPreferencesProvider } from "@/context/PinPreferencesContext";
 
 const queryClient = new QueryClient();
 
@@ -29,18 +30,20 @@ const App = () => (
         <ClientIdProvider>
           <EventProvider>
             <PinProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/public" element={<Index />} />
-                  <Route path="/privacy" element={<Privacy />} />
-                  <Route path="/goals" element={<Goals />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
+              <PinPreferencesProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <Routes>
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/public" element={<Index />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/goals" element={<Goals />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </PinPreferencesProvider>
             </PinProvider>
           </EventProvider>
         </ClientIdProvider>

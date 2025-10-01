@@ -6,7 +6,7 @@ import { Plus, Trash2, History, Heart } from "lucide-react";
 import { ListItemRow } from "./ListItemRow";
 import { ListSettingsDialog } from "./ListSettingsDialog";
 import { usePin } from "@/hooks/usePin";
-import { usePinPreferences } from "@/hooks/usePinPreferences";
+import { usePinPreferences } from "@/context/PinPreferencesContext";
 import type { ShoppingItem } from "@/store/shoppingList";
 import { FeedbackButton } from './FeedbackButton';
 

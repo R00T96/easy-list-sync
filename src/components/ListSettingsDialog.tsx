@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { usePinPreferences, ListType } from '@/hooks/usePinPreferences';
+import { usePinPreferences, ListType } from '@/context/PinPreferencesContext';
 
 export const ListSettingsDialog = () => {
   const { listType, updateListType, isLoading } = usePinPreferences();
