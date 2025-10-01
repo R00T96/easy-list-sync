@@ -295,6 +295,14 @@ export const ListStage = ({
                 onUpdateQty={actions.updateQty}
                 onRestore={actions.restoreItem}
                 onUpdateText={actions.updateText}
+                onNavigateToList={(listName) => {
+                  // Navigate to the specified list
+                  console.log('Navigate to:', listName);
+                }}
+                onCalendarAction={(action) => {
+                  // Handle calendar action
+                  console.log('Calendar action:', action);
+                }}
                 showQuantity={listType === 'shopping'}
               />
             ))}
