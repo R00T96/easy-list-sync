@@ -14,6 +14,15 @@ type ListItemRowProps = {
   showQuantity?: boolean;
 };
 
+const isUrl = (text: string) => {
+  try {
+    new URL(text);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const ListItemRow = ({ 
   item, 
   onToggleDone, 
@@ -69,12 +78,24 @@ export const ListItemRow = ({
             </div>
           ) : (
             <>
-              <p 
-                className={`font-medium leading-none cursor-pointer hover:text-primary transition-colors ${item.deleted ? 'line-through' : ''}`}
-                onClick={() => !item.deleted && setIsEditing(true)}
-              >
-                {item.text}
-              </p>
+              {isUrl(item.text) ? (
+                <a
+                  href={item.text}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`font-medium leading-none text-blue-600 hover:text-blue-800 underline ${item.deleted ? 'line-through' : ''}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {item.text}
+                </a>
+              ) : (
+                <p 
+                  className={`font-medium leading-none cursor-pointer hover:text-primary transition-colors ${item.deleted ? 'line-through' : ''}`}
+                  onClick={() => !item.deleted && setIsEditing(true)}
+                >
+                  {item.text}
+                </p>
+              )}
               {showQuantity && (
                 <p className="text-xs text-muted-foreground">
                   Qty: {item.qty} {item.deleted && '• Removed'}

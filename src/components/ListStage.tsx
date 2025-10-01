@@ -134,6 +134,20 @@ export const ListStage = ({
     }, 0);
   };
 
+  const getProgressEncouragement = (completedCount: number, totalCount: number) => {
+    const percentage = (completedCount / totalCount) * 100;
+    
+    if (percentage >= 75) {
+      return "Almost there! 🎯";
+    } else if (percentage >= 50) {
+      return "Halfway done! 💪";
+    } else if (percentage >= 25) {
+      return "Great start! ⭐";
+    } else {
+      return "Keep going! 🚀";
+    }
+  };
+
   const activeItems = allItems.filter(item => !item.done).length;
   const totalItems = allItems.length;
   const progressPercentage = totalItems > 0 ? (allItems.filter(item => item.done).length / totalItems) * 100 : 0;
@@ -206,7 +220,7 @@ export const ListStage = ({
           </div>
           {completedCount > 0 && (
             <p className="text-xs text-muted-foreground mt-1 text-center">
-              Keep going!
+              {getProgressEncouragement(completedCount, totalItems)}
             </p>
           )}
         </div>
