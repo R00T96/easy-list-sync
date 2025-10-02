@@ -7,6 +7,8 @@ export type ListType = 'shopping' | 'todo';
 type PinPreferencesContextType = {
   listType: ListType;
   updateListType: (newType: ListType) => Promise<void>;
+  isProtected: boolean;
+  setIsProtected: (isProtected: boolean) => Promise<void>;
   isLoading: boolean;
 };
 
@@ -15,6 +17,7 @@ const PinPreferencesContext = createContext<PinPreferencesContextType | undefine
 export const PinPreferencesProvider = ({ children }: { children: ReactNode }) => {
   const { pin } = usePin();
   const [listType, setListType] = useState<ListType>('shopping');
+  const [isProtected, setIsProtectedState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -24,12 +27,13 @@ export const PinPreferencesProvider = ({ children }: { children: ReactNode }) =>
       const supabaseWithPin = createSupabaseWithHeaders({ "x-list-id": pin });
       const { data, error } = await supabaseWithPin
         .from('pin_preferences')
-        .select('list_type')
+        .select('list_type, is_protected')
         .eq('pin', pin)
         .maybeSingle();
 
       if (data) {
         setListType(data.list_type as ListType);
+        setIsProtectedState(data.is_protected || false);
       }
     };
 
@@ -55,8 +59,22 @@ export const PinPreferencesProvider = ({ children }: { children: ReactNode }) =>
     setIsLoading(false);
   };
 
+  const setIsProtected = async (isProtected: boolean) => {
+    if (!pin) return;
+    
+    setIsProtectedState(isProtected);
+    const supabaseWithPin = createSupabaseWithHeaders({ "x-list-id": pin });
+    
+    await supabaseWithPin
+      .from('pin_preferences')
+      .upsert(
+        { pin, is_protected: isProtected },
+        { onConflict: 'pin' }
+      );
+  };
+
   return (
-    <PinPreferencesContext.Provider value={{ listType, updateListType, isLoading }}>
+    <PinPreferencesContext.Provider value={{ listType, updateListType, isProtected, setIsProtected, isLoading }}>
       {children}
     </PinPreferencesContext.Provider>
   );

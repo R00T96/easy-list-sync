@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { usePinPreferences } from "@/context/PinPreferencesContext";
 
 const QRNG_API = "https://qrng.anu.edu.au/API/jsonI.php?length=9&type=hex16&size=6";
 
@@ -9,6 +10,7 @@ type QuantumKeyData = {
 };
 
 export const useQuantumKey = (pin: string | null) => {
+  const { setIsProtected } = usePinPreferences();
   const [hasQuantumKey, setHasQuantumKey] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -45,6 +47,7 @@ export const useQuantumKey = (pin: string | null) => {
 
       localStorage.setItem(`quantum-key-${pin}`, JSON.stringify(keyData));
       setHasQuantumKey(true);
+      await setIsProtected(true);
       
       toast.success("🔐 Quantum Key Generated", {
         description: "This list is now locked. Only you can edit it on this device."
@@ -57,10 +60,11 @@ export const useQuantumKey = (pin: string | null) => {
     }
   };
 
-  const removeQuantumKey = () => {
+  const removeQuantumKey = async () => {
     if (!pin) return;
     localStorage.removeItem(`quantum-key-${pin}`);
     setHasQuantumKey(false);
+    await setIsProtected(false);
     toast.success("🔓 Quantum Key Removed", {
       description: "This list is now public. Anyone can edit it."
     });
