@@ -2,9 +2,10 @@ import { useState, useMemo } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RotateCcw, Check, X, ExternalLink, ArrowRight, Mail, Phone, Calendar } from "lucide-react";
+import { RotateCcw, Check, X, ExternalLink, ArrowRight, Mail, Phone, Calendar, Lock } from "lucide-react";
 import type { ShoppingItem } from "@/store/shoppingList";
 import { ItemParser, ParsedItem, ItemAction } from '@/lib/item-parser';
+import { usePin } from "@/hooks/usePin";
 
 type ListItemRowProps = {
   item: ShoppingItem;
@@ -57,8 +58,12 @@ export const ListItemRow = ({
   onCalendarAction,
   showQuantity = true 
 }: ListItemRowProps) => {
+  const { pin } = usePin();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
+
+  // Check if this list has a quantum key
+  const hasQuantumKey = pin ? !!localStorage.getItem(`quantum-key-${pin}`) : false;
 
   // Parse the item text
   const parsed = useMemo(() => parser.parse(item.text), [item.text]);
@@ -76,7 +81,7 @@ export const ListItemRow = ({
   };
 
   const handleActionClick = (e: React.MouseEvent) => {
-    if (item.deleted) return;
+    if (item.deleted || hasQuantumKey) return;
 
     const action = parsed.action;
     
@@ -101,8 +106,8 @@ export const ListItemRow = ({
     // Base classes
     const baseClasses = `font-medium leading-none transition-colors ${item.deleted ? 'line-through' : ''}`;
     const interactiveClasses = hasInteractiveAction 
-      ? 'hover:text-primary' 
-      : 'cursor-pointer hover:text-primary';
+      ? (hasQuantumKey ? '' : 'hover:text-primary')
+      : (hasQuantumKey ? 'cursor-default' : 'cursor-pointer hover:text-primary');
 
     // Content to display
     const displayContent = (
@@ -149,11 +154,15 @@ export const ListItemRow = ({
   return (
     <li className={`flex items-center justify-between p-3 rounded-md border ${item.deleted ? 'opacity-60 bg-muted/30' : ''}`}>
       <div className="flex items-center gap-3 flex-1 min-w-0">
+        {hasQuantumKey && (
+          <Lock className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+        )}
         {!item.deleted && (
           <Checkbox 
             checked={item.done} 
-            onCheckedChange={() => onToggleDone(item.id)} 
-            aria-label={`Toggle ${item.text}`} 
+            onCheckedChange={() => hasQuantumKey ? null : onToggleDone(item.id)} 
+            aria-label={`Toggle ${item.text}`}
+            disabled={hasQuantumKey}
           />
         )}
         <div className="flex-1 min-w-0">
@@ -202,8 +211,24 @@ export const ListItemRow = ({
             <>
               {showQuantity && (
                 <>
-                  <Button variant="ghost" size="sm" onClick={() => onUpdateQty(item.id, -1)} aria-label="Decrease quantity">-</Button>
-                  <Button variant="ghost" size="sm" onClick={() => onUpdateQty(item.id, +1)} aria-label="Increase quantity">+</Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => onUpdateQty(item.id, -1)} 
+                    aria-label="Decrease quantity"
+                    disabled={hasQuantumKey}
+                  >
+                    -
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => onUpdateQty(item.id, +1)} 
+                    aria-label="Increase quantity"
+                    disabled={hasQuantumKey}
+                  >
+                    +
+                  </Button>
                 </>
               )}
             </>

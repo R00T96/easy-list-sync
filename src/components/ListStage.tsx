@@ -2,13 +2,20 @@ import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, History, Heart } from "lucide-react";
+import { Plus, Trash2, History, Lock, LockOpen, Download } from "lucide-react";
 import { ListItemRow } from "./ListItemRow";
 import { ListSettingsDialog } from "./ListSettingsDialog";
 import { usePin } from "@/hooks/usePin";
 import { usePinPreferences } from "@/context/PinPreferencesContext";
+import { useQuantumKey } from "@/hooks/useQuantumKey";
 import type { ShoppingItem } from "@/store/shoppingList";
 import { FeedbackButton } from './FeedbackButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type ListActions = {
   addItem: () => void;
@@ -53,6 +60,7 @@ export const ListStage = ({
 }: ListStageProps) => {
   const { pin } = usePin();
   const { listType } = usePinPreferences();
+  const { hasQuantumKey, isGenerating, generateQuantumKey, removeQuantumKey, downloadQuantumKey } = useQuantumKey(pin);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const placeholderOptions = [
@@ -255,6 +263,38 @@ export const ListStage = ({
                     <History className="mr-2 h-4 w-4" />
                     {showAllItems ? "Show Active Only" : "View All Items"}
                   </Button>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" disabled={isGenerating}>
+                        {hasQuantumKey ? (
+                          <Lock className="h-4 w-4 text-primary" />
+                        ) : (
+                          <LockOpen className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {hasQuantumKey ? (
+                        <>
+                          <DropdownMenuItem onClick={removeQuantumKey}>
+                            <LockOpen className="mr-2 h-4 w-4" />
+                            Remove Quantum Key
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={downloadQuantumKey}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Download Key
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        <DropdownMenuItem onClick={generateQuantumKey} disabled={isGenerating}>
+                          <Lock className="mr-2 h-4 w-4" />
+                          {isGenerating ? "Generating..." : "Generate Quantum Key"}
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  
                   <ListSettingsDialog />
                 </div>
                 {showAllItems && (
