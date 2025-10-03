@@ -52,6 +52,11 @@ export type Database = {
           is_protected: boolean
           list_type: string
           pin: string
+          protected_at: string | null
+          protected_by_device_id: string | null
+          protection_version: number
+          quantum_key_hash: string | null
+          quantum_key_salt: string | null
           updated_at: string
         }
         Insert: {
@@ -61,6 +66,11 @@ export type Database = {
           is_protected?: boolean
           list_type?: string
           pin: string
+          protected_at?: string | null
+          protected_by_device_id?: string | null
+          protection_version?: number
+          quantum_key_hash?: string | null
+          quantum_key_salt?: string | null
           updated_at?: string
         }
         Update: {
@@ -70,7 +80,69 @@ export type Database = {
           is_protected?: boolean
           list_type?: string
           pin?: string
+          protected_at?: string | null
+          protected_by_device_id?: string | null
+          protection_version?: number
+          quantum_key_hash?: string | null
+          quantum_key_salt?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      pin_protection_audit: {
+        Row: {
+          created_at: string
+          details: Json | null
+          device_id: string | null
+          event: string
+          id: number
+          ip: unknown | null
+          pin: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          device_id?: string | null
+          event: string
+          id?: number
+          ip?: unknown | null
+          pin: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          device_id?: string | null
+          event?: string
+          id?: number
+          ip?: unknown | null
+          pin?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      pin_rate_limits: {
+        Row: {
+          attempts: number
+          bucket_start: string
+          id: number
+          ip: unknown
+          pin: string
+        }
+        Insert: {
+          attempts?: number
+          bucket_start: string
+          id?: number
+          ip: unknown
+          pin: string
+        }
+        Update: {
+          attempts?: number
+          bucket_start?: string
+          id?: number
+          ip?: unknown
+          pin?: string
         }
         Relationships: []
       }
