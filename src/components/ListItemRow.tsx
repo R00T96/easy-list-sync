@@ -7,6 +7,7 @@ import type { ShoppingItem } from "@/store/shoppingList";
 import { ItemParser, ParsedItem, ItemAction } from '@/lib/item-parser';
 import { usePin } from "@/hooks/usePin";
 import { usePinPreferences } from "@/context/PinPreferencesContext";
+import { useQuantumKey } from "@/hooks/useQuantumKey";
 
 type ListItemRowProps = {
   item: ShoppingItem;
@@ -61,14 +62,12 @@ export const ListItemRow = ({
 }: ListItemRowProps) => {
   const { pin } = usePin();
   const { isProtected } = usePinPreferences();
+  const { canEdit } = useQuantumKey(pin);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
-
-  // Check if this device has the quantum key
-  const hasQuantumKey = pin ? !!localStorage.getItem(`quantum-key-${pin}`) : false;
   
-  // Determine if editing is locked: list is protected but this device doesn't have the key
-  const isLocked = isProtected && !hasQuantumKey;
+  // Determine if editing is locked (server-verified)
+  const isLocked = !canEdit;
 
   // Parse the item text
   const parsed = useMemo(() => parser.parse(item.text), [item.text]);
